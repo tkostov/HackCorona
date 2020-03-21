@@ -1,7 +1,7 @@
 #HackCorona Team @ WirVsCorona Hackathon
 
 ##Rules of the game:
-* Bitte keine Force pushes
+* Please no Force pushes
 * Comments are good
 * Branches are good
 * @PythonDevs please do not push the whole virtualenvs
@@ -14,3 +14,7 @@
 * backend/
 * frontend/
 * **feel free to add your teams here**
+
+
+### List of contributors:
+* Add your self here
