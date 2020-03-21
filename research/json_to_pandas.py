@@ -47,7 +47,7 @@ class DataLoader(object):
                          "Other": "Object"}
         rki_dataset = pd.DataFrame(entries, columns=field_names)
 
-        data_dict_ = {}
+        data_dict_ = dict()
         data_dict_["RKI_Data"] = rki_dataset
         return data_dict_
 
