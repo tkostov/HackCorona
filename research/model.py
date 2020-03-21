@@ -38,6 +38,7 @@ def base_seir_model(init_vals, params, t):
 def seir_model_with_soc_dist(init_vals, params, t):
     S_0, E_0, I_0, R_0 = init_vals
     S, E, I, R = [S_0], [E_0], [I_0], [R_0]
+    # 1 >= rho >= 0 means social distancing, the lower the higher the distance
     alpha, beta, gamma, rho = params
     dt = t[1] - t[0]
     for _ in t[1:]:
@@ -55,18 +56,13 @@ def seir_model_with_soc_dist(init_vals, params, t):
 if __name__ == '__main__':
     # run simulation
     p = ModelParams()
-    results = base_seir_model(p.init_vals, (p.alpha, p.beta, p.gamma), p.t)
 
-    # susceptible (could contract disease
-    plt.plot(p.t, results.T[0], '-', label='S')
-    # exposed (infected but in incubation period)
-    plt.plot(p.t, results.T[1], '-', label='E')
-    # infected
-    plt.plot(p.t, results.T[2], '-', label='I')
-    # removed (eg. recovered)
-    plt.plot(p.t, results.T[3], '-', label='R')
+    social_distancing_trials = [1.0, 0.8, 0.6, 0.5]
+    for rho in social_distancing_trials:
+        results = seir_model_with_soc_dist(p.init_vals, (p.alpha, p.beta, p.gamma, rho), p.t)
+        plt.plot(p.t, results.T[2], '-')
 
-    plt.legend(['S', 'E', 'I', 'R'])
+    plt.legend([f'Infected (p = {rho})' for rho in social_distancing_trials])
     plt.xlabel('Time')
     plt.ylabel('Number')
 
