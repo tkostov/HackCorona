@@ -1,6 +1,7 @@
 from research.model import ModelParams, base_seir_model
 import matplotlib.pyplot as plt
-
+from research.json_to_pandas import DataLoader
+import pandas as pd
 
 def plot_discrepancy(model_prediction, actual_data, time):
     plt.plot(time, model_prediction, '-')
@@ -14,8 +15,19 @@ def plot_discrepancy(model_prediction, actual_data, time):
 
 
 def load_data():
-    pass
-
+    """
+    :return: Dataframe : Columns = landkreise, Index = Meldedatum, values : Anzahl gemeldete Fälle
+    """
+    dl = DataLoader()
+    data_dict = dl.process_data()
+    rk_ = data_dict["RKI_Data"]
+    rk_["Meldedatum"] = pd.to_datetime(rk_["Meldedatum"], unit="ms")
+    df = rk_.groupby(["IdLandkreis", "Meldedatum"]).aggregate(func="sum")[["AnzahlFall"]].reset_index()
+    df = df.pivot(values=["AnzahlFall"], index="Meldedatum", columns="IdLandkreis")
+    df.fillna(0, inplace=True)
+    for x in range(df.shape[1]):
+        df.iloc[:,x] = df.iloc[:,x].cumsum()
+    return df
 
 if __name__ == '__main__':
     actual_data = load_data()
