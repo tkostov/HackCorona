@@ -49,26 +49,25 @@ if __name__ == '__main__':
     population = 250000
     landkreis_data = list(actual_data.iloc[:, 86].values / population)
 
-    # prepend as many days as the incubation period
-    landkreis_data = [0] * 5 + landkreis_data
-
-
     min_ssq = None
     best_param = None
 
     initially_exposed = 50
+    incubation_pepriod = 5
+
+    # prepend as many days as the incubation period
+    landkreis_data = [0] * incubation_pepriod + landkreis_data
 
     for gamma in np.linspace(1/20, 1, 10):
         for beta in np.linspace(0.5, 2.0, 15):
             p = ModelParams(beta=beta, gamma=gamma, population_size=population, t_max=len(landkreis_data),
-                            incubation_period=2, initially_exposed=initially_exposed)
+                            incubation_period=incubation_pepriod, initially_exposed=initially_exposed)
             infected_model, ssq = run_eval(p)
-            # plot_discrepancy(infected_model, p.t, landkreis_data, np.arange(0, len(landkreis_data)), f'beta {beta} -> ssq {ssq}')
             if min_ssq is None or ssq < min_ssq:
                 min_ssq = ssq
                 best_param = (beta, gamma)
 
-    p = ModelParams(beta=best_param[0], gamma=best_param[1], population_size=population, t_max=len(landkreis_data), incubation_period=2,
+    p = ModelParams(beta=best_param[0], gamma=best_param[1], population_size=population, t_max=len(landkreis_data), incubation_period=incubation_pepriod,
                     initially_exposed=initially_exposed)
     infected_model, ssq = run_eval(p)
     plot_discrepancy(infected_model, p.t, landkreis_data, np.arange(0, len(landkreis_data)), f'Best: beta {best_param} -> ssq {ssq:.3f}')
