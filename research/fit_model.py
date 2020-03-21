@@ -44,6 +44,22 @@ def run_eval(p):
     ssq = squared_diffs(infected_model, landkreis_data)
     return infected_model, ssq
 
+def trim_first_infected(data, incubation_pepriod):
+    """
+    Remove data points before first infection - incubation period
+    """
+
+    for t in range(len(data)):
+        if data[t] > 0:
+            day_first_infected = t
+            break
+    else:
+        return data
+
+    return data[max(0, day_first_infected - incubation_pepriod):]
+
+
+
 if __name__ == '__main__':
     actual_data = load_data()
     ignore_last_days = 2    # last days have bad data, idk why
@@ -57,8 +73,7 @@ if __name__ == '__main__':
     initially_exposed = 50
     incubation_pepriod = 5
 
-    # prepend as many days as the incubation period
-    landkreis_data = [0] * incubation_pepriod + landkreis_data
+    landkreis_data = trim_first_infected(landkreis_data, incubation_pepriod)
 
     for gamma in np.linspace(1/20, 1, 10):
         for beta in np.linspace(0.5, 2.0, 15):
