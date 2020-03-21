@@ -23,29 +23,96 @@
  <link href="leaflet-easybutton_2.4.0.css" rel="stylesheet">
  <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
  
-	<style>
-		html, body {
-			height: 100%;
-			margin: 0;
-		}
-		#map {
-			width: 600px;
-			height: 800px;
-		}
-	</style>
-
-	<style>#map { width: 100%; height: 100%; }
-.info { padding: 6px 8px; font: 14px/16px Arial, Helvetica, sans-serif; background: white; background: rgba(255,255,255,0.8); box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; } .info h4 { margin: 0 0 5px; color: #777; }
-.legend { text-align: left; line-height: 18px; color: #555; } .legend i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.7; }</style>
+<style>
+	html, body {
+		height: 100%;
+		margin: 0;
+	}
+	#map {
+		width: 80%;
+		height: 100%;
+	}
+	#settings {
+		width: 20%;
+		height: 100%;
+		background-color:grey;
+		float:left;
+	}
+	.info { 
+		padding: 6px 8px; 
+		font: 14px/16px Arial, Helvetica, sans-serif; 
+		background: white; 
+		background: rgba(255,255,255,0.8); 
+		box-shadow: 0 0 15px rgba(0,0,0,0.2); 
+		border-radius: 5px; } .info h4 { margin: 0 0 5px; color: #777; 
+	}		
+	.legend { 
+		text-align: left; 
+		line-height: 18px; 
+		color: #555; 
+	} 		
+	.legend i { 	
+		width: 18px; 	
+		height: 18px; 
+		float: left; 
+		margin-right: 8px; 
+		opacity: 0.7; 
+	}
+	#main-header {
+		margin-top:10%;
+		margin-bottom:10%;
+	}
+	.button {
+		width: 32%;
+	}
+	#rangeDays {
+		width: 100%;
+	}
+	.div-wrapper img {
+		position: absolute;
+		left: 0;
+		bottom: 0;
+	}
+</style>
 
 
 </head>
 
 <body>
 
-
-TEST 
-TEST 
+ <div id="settings">
+	<h2 id = "main-header">COVID - 19 Simulation</h3>
+	<hr>
+	<p>Landjaeger prosciutto flank andouille bresaola, strip steak ball tip. Doner meatloaf shankle, shoulder t-bone fatback brisket sausage. Buffalo landjaeger beef ribs rump shankle. Chuck sirloin cupim tri-tip pork belly pork loin fatback leberkas.</p>
+	<hr>
+	<h4>Einstellungen</h4>
+	<button class = "button" type="button">Infizierte</button> 
+	<button class = "button" type="button">Geheilt</button> 
+	<button class = "button" type="button">Verstorben</button> 
+	<p>Bewege den Slider um die nächsten Tage zu simulieren.</p>
+	<div class="slidecontainer">
+		<input type="range" min="1" max="100" value="50" class="slider" id="rangeDays">
+	</div>
+	<p>Wähle folgende Optionen aus um die Ausbreitung zu verlangsamen.</p>
+	<input type="checkbox" id="vehicle1" name="vehicle1" value="Bike">
+	<label for="vehicle1"> Ausgangssperre</label><br>
+	<input type="checkbox" id="vehicle2" name="vehicle2" value="Car">
+	<label for="vehicle2"> Schulschließung</label><br>
+	<hr>
+	<h4>Weitere nützliche Informationen</h4>
+	<div>
+		<a href="https://www.w3schools.com/html/">Link1 zu www</a>
+	</div>
+	<div>	
+		<a href="https://www.w3schools.com/html/">Link1 zu www</a>
+	</div>		
+	<div>
+		<a href="https://www.w3schools.com/html/">Link1 zu www</a>
+	</div>
+	<div class="div-wrapper">
+		<img style = "width:20%" src="images/wirvsvirus.jpg"">	
+	</div>
+</div> 
 <div id="map"/>
 
 
@@ -194,7 +261,7 @@ function onMapClick(e) {
 <script>
 	var sm = document.getElementById("map");
 	sm.style.height = "100%";
-	sm.style.width = "100%";
+	sm.style.width = "80%";
 	
 	loadMap("map", 7);
 	prepareButtons();
