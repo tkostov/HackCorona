@@ -12,7 +12,10 @@ class ModelParams:
         dt = .1
         self.t = np.linspace(0, t_max, int(t_max / dt) + 1)
         N = 10000
-        self.init_vals = 1 - 1 / N, 1 / N, 0, 0
+        self.S_init = 1 - 1 / N     # susceptible (could contract disease
+        self.E_init = 1 / N         # exposed (infected but in incubation period)
+        self.I_init = 0             # infected
+        self.R_init = 0             # removed (eg. recovered or died)
         self.alpha = 0.2
         self.beta = 1.75
         self.gamma = 0.5
@@ -59,11 +62,11 @@ if __name__ == '__main__':
 
     social_distancing_trials = [1.0, 0.8, 0.6, 0.5]
     for rho in social_distancing_trials:
-        results = seir_model_with_soc_dist(p.init_vals, (p.alpha, p.beta, p.gamma, rho), p.t)
+        results = seir_model_with_soc_dist((p.S_init, p.E_init, p.I_init, p.R_init), (p.alpha, p.beta, p.gamma, rho), p.t)
         plt.plot(p.t, results.T[2], '-')
 
     plt.legend([f'Infected (p = {rho})' for rho in social_distancing_trials])
     plt.xlabel('Time')
-    plt.ylabel('Number')
+    plt.ylabel('Fraction of population')
 
     plt.show()
