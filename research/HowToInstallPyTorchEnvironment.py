@@ -5,7 +5,9 @@
 # pip install pymongo
 # pip install sklearn
 # pip install matplotlib
+#
 # pip install requests
+# pip install python-dotenv
 ## Use Git to clone https://github.com/RainerHeintzmann/da-rnn.git
 # which is a fork of https://github.com/Seanny123/da-rnn
 # with bug fix in modules.py, according to https://github.com/Seanny123/da-rnn/issues/10

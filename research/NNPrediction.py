@@ -3,11 +3,14 @@ import pandas as pd
 from joblib import delayed, Parallel
 import numpy as np
 from tqdm import tqdm
-from matplotlib.pyplot import plot,legend,title
-from .json_to_pandas import DataLoader
+#from pymongo import MongoClient
+#from dotenv import load_dotenv
+#import os
+from matplotlib.pyplot import plot,legend,title,figure,xlabel
+import json_to_pandas
 
 def retrieveData():
-    dl = DataLoader()  # instanciate DataLoader
+    dl = json_to_pandas.DataLoader(from_back_end=True)  # instanciate DataLoader
     data_dict = dl.process_data()  # loads and forms the data dictionary
     rki_data = data_dict["RKI_Data"]  # only RKI dataframe
     return rki_data
@@ -29,10 +32,10 @@ def cumulate(rki_data):
     LKs = getLabels(rki_data,'Landkreis')
     Ages = getLabels(rki_data,'Altersgruppe')
     Geschlechter = getLabels(rki_data,'Geschlecht')
-    CumSumCase = np.zeros([len(LKs), len(Ages), len(Geschlecht)])
-    AllCumulCase = np.zeros([dayLast-day1+1, len(LKs), len(Ages), len(Geschlecht)])
-    CumSumDead = np.zeros([len(LKs), len(Ages), len(Geschlecht)])
-    AllCumulDead = np.zeros([dayLast-day1+1, len(LKs), len(Ages), len(Geschlecht)])
+    CumSumCase = np.zeros([len(LKs), len(Ages), len(Geschlechter)])
+    AllCumulCase = np.zeros([dayLast-day1+1, len(LKs), len(Ages), len(Geschlechter)])
+    CumSumDead = np.zeros([len(LKs), len(Ages), len(Geschlechter)])
+    AllCumulDead = np.zeros([dayLast-day1+1, len(LKs), len(Ages), len(Geschlechter)])
 
     # CumMale = np.zeros(dayLast-day1); CumFemale = np.zeros(dayLast-day1)
     # TMale = 0; TFemale = 0; # TAge = zeros()
@@ -43,10 +46,10 @@ def cumulate(rki_data):
         myAge = Ages.index(row['Altersgruppe'])
         myG = Geschlechter.index(row['Geschlecht'])
         AnzahlFall = row['AnzahlFall']
-        AnzahlTodesFall = row['AnzahlTodesFall']
+        AnzahlTodesfall = row['AnzahlTodesfall']
         CumSumCase[myLK,myAge,myG] += AnzahlFall
         AllCumulCase[day, :, :, :] = CumSumCase
-        CumSumDead[myLK, myAge, myG] += AnzahlTodesFall
+        CumSumDead[myLK, myAge, myG] += AnzahlTodesfall
         AllCumulDead[day, :, :, :] = CumSumDead
     return AllCumulCase, AllCumulDead,(LKs,Ages,Geschlechter)
 
@@ -63,11 +66,8 @@ CumMaleD = np.sum(CumSumDead[:,:,:,0],axis=(1,2))
 CumFemaleD = np.sum(CumSumDead[:,:,:,1],axis=(1,2))
 
 plot(CumMale,label='M case'); plot(CumFemale,label='W case')
+legend();title('Deutschland');xlabel('days')
+figure()
 plot(CumMaleD,label='M deaths'); plot(CumFemaleD,label='W deaths')
-legend();title(Land)
+legend();title('Deutschland');xlabel('days')
 
-cum_Anzahl = rki_data.cumsum(axis=0).AnzahlFall
-Land_data = rki_data[rki_data.Bundesland==Land]
-plot(Land_data[Land_data.Geschlecht == 'M'].AnzahlFall)
-plot(rki_data.cumsum(axis='M'))
-legend();title(Land)
