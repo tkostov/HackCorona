@@ -8,17 +8,17 @@ import matplotlib.pyplot as plt
 # model parameters
 class ModelParams:
     def __init__(self):
-        t_max = 100
-        dt = .1
-        self.t = np.linspace(0, t_max, int(t_max / dt) + 1)
-        N = 10000
+        t_max = 100     # maximum time
+        dt = .1         # time step
+        self.t = np.linspace(0, t_max, int(t_max / dt) + 1)     # points in time
+        N = 10000       # population size
         self.S_init = 1 - 1 / N     # susceptible (could contract disease
         self.E_init = 1 / N         # exposed (infected but in incubation period)
         self.I_init = 0             # infected
         self.R_init = 0             # removed (eg. recovered or died)
-        self.alpha = 0.2
-        self.beta = 1.75
-        self.gamma = 0.5
+        self.alpha = 0.2            # inverse of the incubation period
+        self.beta = 1.75            # average contact rate in the population
+        self.gamma = 0.5            # inverse of the mean infectious period
 
 
 def base_seir_model(init_vals, params, t):
