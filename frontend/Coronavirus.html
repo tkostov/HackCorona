@@ -5,7 +5,13 @@
   
   <link rel="stylesheet" type="text/css" href="bootstrap.min.css">
   <link rel="stylesheet" type="text/css" href="style.css">
-    <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
+  <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
+  
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+
+
   
   <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
  
@@ -24,55 +30,7 @@
  <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
  
 <style>
-	html, body {
-		height: 100%;
-		margin: 0;
-	}
-	#map {
-		width: 80%;
-		height: 100%;
-	}
-	#settings {
-		width: 20%;
-		height: 100%;
-		background-color:grey;
-		float:left;
-	}
-	.info { 
-		padding: 6px 8px; 
-		font: 14px/16px Arial, Helvetica, sans-serif; 
-		background: white; 
-		background: rgba(255,255,255,0.8); 
-		box-shadow: 0 0 15px rgba(0,0,0,0.2); 
-		border-radius: 5px; } .info h4 { margin: 0 0 5px; color: #777; 
-	}		
-	.legend { 
-		text-align: left; 
-		line-height: 18px; 
-		color: #555; 
-	} 		
-	.legend i { 	
-		width: 18px; 	
-		height: 18px; 
-		float: left; 
-		margin-right: 8px; 
-		opacity: 0.7; 
-	}
-	#main-header {
-		margin-top:10%;
-		margin-bottom:10%;
-	}
-	.button {
-		width: 32%;
-	}
-	#rangeDays {
-		width: 100%;
-	}
-	.div-wrapper img {
-		position: absolute;
-		left: 0;
-		bottom: 0;
-	}
+
 </style>
 
 
@@ -86,18 +44,25 @@
 	<p>Landjaeger prosciutto flank andouille bresaola, strip steak ball tip. Doner meatloaf shankle, shoulder t-bone fatback brisket sausage. Buffalo landjaeger beef ribs rump shankle. Chuck sirloin cupim tri-tip pork belly pork loin fatback leberkas.</p>
 	<hr>
 	<h4>Einstellungen</h4>
-	<button class = "button" type="button">Infizierte</button> 
-	<button class = "button" type="button">Geheilt</button> 
-	<button class = "button" type="button">Verstorben</button> 
+	<div class="buttons btn-group" role="group" aria-label="Basic example">
+	  <button type="button" class="btn btn-secondary">Infizierte</button>
+	  <button type="button" class="btn btn-secondary">Verstorbene</button>
+	</div>
+	
+	<div class="buttons btn-group" role="group" aria-label="Basic example">
+	  <button type="button" class="btn btn-secondary">Normalisiert</button>
+	  <button type="button" class="btn btn-secondary">Real</button>
+	</div>
+		
 	<p>Bewege den Slider um die nächsten Tage zu simulieren.</p>
 	<div class="slidecontainer">
 		<input type="range" min="1" max="100" value="50" class="slider" id="rangeDays">
 	</div>
 	<p>Wähle folgende Optionen aus um die Ausbreitung zu verlangsamen.</p>
 	<input type="checkbox" id="vehicle1" name="vehicle1" value="Bike">
-	<label for="vehicle1"> Ausgangssperre</label><br>
+	<label for="vehicle1"> Option 1</label><br>
 	<input type="checkbox" id="vehicle2" name="vehicle2" value="Car">
-	<label for="vehicle2"> Schulschließung</label><br>
+	<label for="vehicle2"> Option 2</label><br>
 	<hr>
 	<h4>Weitere nützliche Informationen</h4>
 	<div>
@@ -110,7 +75,7 @@
 		<a href="https://www.w3schools.com/html/">Link1 zu www</a>
 	</div>
 	<div class="div-wrapper">
-		<img style = "width:20%" src="images/wirvsvirus.jpg"">	
+		<img style = "width:20%" src="images/wirvsvirus.jpg">	
 	</div>
 </div> 
 <div id="map"/>
