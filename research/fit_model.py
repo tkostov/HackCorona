@@ -46,8 +46,10 @@ def run_eval(p):
 
 if __name__ == '__main__':
     actual_data = load_data()
+    ignore_last_days = 2    # last days have bad data, idk why
+    # Heinsberg
     population = 250000
-    landkreis_data = list(actual_data.iloc[:, 86].values / population)
+    landkreis_data = list(actual_data[('AnzahlFall', '05370')].values / population)[:-ignore_last_days]
 
     min_ssq = None
     best_param = None
