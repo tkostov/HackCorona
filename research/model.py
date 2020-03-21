@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 class ModelParams:
     def __init__(self):
         t_max = 100     # maximum time (days)
-        dt = .1         # time step
+        dt = 1         # time step
         self.t = np.linspace(0, t_max, int(t_max / dt) + 1)     # points in time
         N = 10000       # population size
         self.S_init = 1 - 1 / N     # susceptible (could contract disease

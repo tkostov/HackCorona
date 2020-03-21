@@ -41,7 +41,7 @@ class DataLoader(object):
         field_names = [x["name"] for x in data_dict["fields"]]
         field_types = [x["sqlType"][7:] for x in data_dict["fields"]]
         entries = data_dict["features"]
-        entries = Parallel(n_jobs=32)(delayed(DataLoader.parse_row)(x) for x in tqdm(entries))
+        entries = Parallel(n_jobs=1)(delayed(DataLoader.parse_row)(x) for x in tqdm(entries))
         dtype_mapping = {"Integer": "np.int64",
                          "NVarchar": "str",
                          "Other": "Object"}
