@@ -70,23 +70,20 @@ if __name__ == '__main__':
     min_ssq = None
     best_param = None
 
-    initially_exposed = 50
     incubation_pepriod = 5
 
     landkreis_data = trim_first_infected(landkreis_data, incubation_pepriod)
 
-    for gamma in np.linspace(1/20, 1, 10):
-        for beta in np.linspace(0.5, 2.0, 15):
-            p = ModelParams(beta=beta, gamma=gamma, population_size=population, t_max=len(landkreis_data),
-                            incubation_period=incubation_pepriod, initially_exposed=initially_exposed)
+    for initially_exposed in np.linspace(1, 20, 10):
+        for beta in np.linspace(0.5, 3.0, 15):
+            p = ModelParams(beta=beta, population_size=population, t_max=100,
+                            incubation_period=incubation_pepriod, initially_exposed=int(initially_exposed))
             infected_model, ssq = run_eval(p)
             if min_ssq is None or ssq < min_ssq:
                 min_ssq = ssq
-                best_param = (beta, gamma)
+                best_param = p
 
-    p = ModelParams(beta=best_param[0], gamma=best_param[1], population_size=population, t_max=len(landkreis_data), incubation_period=incubation_pepriod,
-                    initially_exposed=initially_exposed)
-    infected_model, ssq = run_eval(p)
-    plot_discrepancy(infected_model, p.t, landkreis_data, np.arange(0, len(landkreis_data)), f'Best: beta {best_param} -> ssq {ssq:.3f}')
+    infected_model, ssq = run_eval(best_param)
+    plot_discrepancy(infected_model, best_param.t, landkreis_data, np.arange(0, len(landkreis_data)), f'Best: beta {best_param} -> ssq {ssq:.3f}')
 
     print(f'Found best param: {best_param} -> ssq {min_ssq:.3f}')
