@@ -20,7 +20,7 @@ def load_data():
     """
     :return: Dataframe : Columns = landkreise, Index = Meldedatum, values : Anzahl gemeldete Fälle
     """
-    dl = DataLoader()
+    dl = DataLoader(from_back_end=True)
     data_dict = dl.process_data()
     rk_ = data_dict["RKI_Data"]
     rk_["Meldedatum"] = pd.to_datetime(rk_["Meldedatum"], unit="ms")
