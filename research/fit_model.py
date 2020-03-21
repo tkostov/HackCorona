@@ -38,24 +38,39 @@ def squared_diffs(series1, series2):
         sumsq += (s1 - s2) * (s1 - s2)
     return sumsq
 
+def run_eval(p):
+    results = base_seir_model((p.S_init, p.E_init, p.I_init, p.R_init), (p.alpha, p.beta, p.gamma), p.t)
+    infected_model = results.T[2]
+    ssq = squared_diffs(infected_model, landkreis_data)
+    return infected_model, ssq
 
 if __name__ == '__main__':
     actual_data = load_data()
     population = 250000
     landkreis_data = list(actual_data.iloc[:, 86].values / population)
 
-    p = ModelParams()
+    # prepend as many days as the incubation period
+    landkreis_data = [0] * 5 + landkreis_data
+
 
     min_ssq = None
     best_param = None
 
-    for beta in np.linspace(0.5, 2.0, 15):
-        results = base_seir_model((p.S_init, p.E_init, p.I_init, p.R_init), (p.alpha, p.beta, p.gamma), p.t)
-        infected_model = results.T[2]
-        ssq = squared_diffs(infected_model, landkreis_data)
-        plot_discrepancy(infected_model, p.t, landkreis_data, np.arange(0, len(landkreis_data)), f'beta {beta} -> ssq {ssq}')
-        if min_ssq is None or ssq < min_ssq:
-            min_ssq = ssq
-            best_param = beta
+    initially_exposed = 50
 
-    print(f'Found best param: {best_param} -> ssq {min_ssq}')
+    for gamma in np.linspace(1/20, 1, 10):
+        for beta in np.linspace(0.5, 2.0, 15):
+            p = ModelParams(beta=beta, gamma=gamma, population_size=population, t_max=len(landkreis_data),
+                            incubation_period=2, initially_exposed=initially_exposed)
+            infected_model, ssq = run_eval(p)
+            # plot_discrepancy(infected_model, p.t, landkreis_data, np.arange(0, len(landkreis_data)), f'beta {beta} -> ssq {ssq}')
+            if min_ssq is None or ssq < min_ssq:
+                min_ssq = ssq
+                best_param = (beta, gamma)
+
+    p = ModelParams(beta=best_param[0], gamma=best_param[1], population_size=population, t_max=len(landkreis_data), incubation_period=2,
+                    initially_exposed=initially_exposed)
+    infected_model, ssq = run_eval(p)
+    plot_discrepancy(infected_model, p.t, landkreis_data, np.arange(0, len(landkreis_data)), f'Best: beta {best_param} -> ssq {ssq:.3f}')
+
+    print(f'Found best param: {best_param} -> ssq {min_ssq:.3f}')
