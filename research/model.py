@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 # from https://towardsdatascience.com/social-distancing-to-slow-the-coronavirus-768292f04296
@@ -55,3 +56,18 @@ if __name__ == '__main__':
     # run simulation
     p = ModelParams()
     results = base_seir_model(p.init_vals, (p.alpha, p.beta, p.gamma), p.t)
+
+    # susceptible (could contract disease
+    plt.plot(p.t, results.T[0], '-', label='S')
+    # exposed (infected but in incubation period)
+    plt.plot(p.t, results.T[1], '-', label='E')
+    # infected
+    plt.plot(p.t, results.T[2], '-', label='I')
+    # removed (eg. recovered)
+    plt.plot(p.t, results.T[3], '-', label='R')
+
+    plt.legend(['S', 'E', 'I', 'R'])
+    plt.xlabel('Time')
+    plt.ylabel('Number')
+
+    plt.show()
