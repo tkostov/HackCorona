@@ -29,8 +29,10 @@ def cumulate(rki_data):
     LKs = getLabels(rki_data,'Landkreis')
     Ages = getLabels(rki_data,'Altersgruppe')
     Geschlechter = getLabels(rki_data,'Geschlecht')
-    CumSum = np.zeros([len(LKs), len(Ages), len(Geschlecht)])
-    AllCumul = np.zeros([dayLast-day1+1, len(LKs), len(Ages), len(Geschlecht)])
+    CumSumCase = np.zeros([len(LKs), len(Ages), len(Geschlecht)])
+    AllCumulCase = np.zeros([dayLast-day1+1, len(LKs), len(Ages), len(Geschlecht)])
+    CumSumDead = np.zeros([len(LKs), len(Ages), len(Geschlecht)])
+    AllCumulDead = np.zeros([dayLast-day1+1, len(LKs), len(Ages), len(Geschlecht)])
 
     # CumMale = np.zeros(dayLast-day1); CumFemale = np.zeros(dayLast-day1)
     # TMale = 0; TFemale = 0; # TAge = zeros()
@@ -41,21 +43,27 @@ def cumulate(rki_data):
         myAge = Ages.index(row['Altersgruppe'])
         myG = Geschlechter.index(row['Geschlecht'])
         AnzahlFall = row['AnzahlFall']
-        CumSum[myLK,myAge,myG] += AnzahlFall
-        AllCumul[day, :, :, :] = CumSum
-    return AllCumul, (LKs,Ages,Geschlechter)
+        AnzahlTodesFall = row['AnzahlTodesFall']
+        CumSumCase[myLK,myAge,myG] += AnzahlFall
+        AllCumulCase[day, :, :, :] = CumSumCase
+        CumSumDead[myLK, myAge, myG] += AnzahlTodesFall
+        AllCumulDead[day, :, :, :] = CumSumDead
+    return AllCumulCase, AllCumulDead,(LKs,Ages,Geschlechter)
 
 rki_data = retrieveData()
 rki_data.shape
 rki_data.sort_values('Meldedatum', axis=0, ascending=True, inplace=True, na_position='last')
 
 LandKreis = 'Hamburg'
-CumSum, Labels = cumulate(rki_data)
+CumSumCase, CumSumDead, Labels = cumulate(rki_data)
 
-CumMale = np.sum(CumSum[:,:,:,0],axis=(1,2))
-CumFemale = np.sum(CumSum[:,:,:,1],axis=(1,2))
+CumMale = np.sum(CumSumCase[:,:,:,0],axis=(1,2))
+CumFemale = np.sum(CumSumCase[:,:,:,1],axis=(1,2))
+CumMaleD = np.sum(CumSumDead[:,:,:,0],axis=(1,2))
+CumFemaleD = np.sum(CumSumDead[:,:,:,1],axis=(1,2))
 
-plot(CumMale,label='M'); plot(CumFemale,label='W')
+plot(CumMale,label='M case'); plot(CumFemale,label='W case')
+plot(CumMaleD,label='M deaths'); plot(CumFemaleD,label='W deaths')
 legend();title(Land)
 
 cum_Anzahl = rki_data.cumsum(axis=0).AnzahlFall
