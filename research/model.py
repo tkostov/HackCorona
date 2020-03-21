@@ -37,32 +37,13 @@ def base_seir_model(init_vals, params, t):
         R.append(next_R)
     return np.stack([S, E, I, R]).T
 
-
-def seir_model_with_soc_dist(init_vals, params, t):
-    S_0, E_0, I_0, R_0 = init_vals
-    S, E, I, R = [S_0], [E_0], [I_0], [R_0]
-    # 1 >= rho >= 0 means social distancing, the lower the higher the distance
-    alpha, beta, gamma, rho = params
-    dt = t[1] - t[0]
-    for _ in t[1:]:
-        next_S = S[-1] - (rho * beta * S[-1] * I[-1]) * dt
-        next_E = E[-1] + (rho * beta * S[-1] * I[-1] - alpha * E[-1]) * dt
-        next_I = I[-1] + (alpha * E[-1] - gamma * I[-1]) * dt
-        next_R = R[-1] + (gamma * I[-1]) * dt
-        S.append(next_S)
-        E.append(next_E)
-        I.append(next_I)
-        R.append(next_R)
-    return np.stack([S, E, I, R]).T
-
-
 if __name__ == '__main__':
     # run simulation
     p = ModelParams()
 
     social_distancing_trials = [1.0, 0.8, 0.6, 0.5]
     for rho in social_distancing_trials:
-        results = seir_model_with_soc_dist((p.S_init, p.E_init, p.I_init, p.R_init), (p.alpha, p.beta, p.gamma, rho), p.t)
+        results = base_seir_model((p.S_init, p.E_init, p.I_init, p.R_init), (p.alpha, rho * p.beta, p.gamma), p.t)
         plt.plot(p.t, results.T[2], '-')
 
     plt.legend([f'Infected (p = {rho})' for rho in social_distancing_trials])
