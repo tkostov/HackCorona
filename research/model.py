@@ -10,7 +10,8 @@ class ModelParams:
     def __init__(self, initially_exposed=1, beta=1.75, gamma=0.5, population_size=10000, dt=1, t_max=100,
                  incubation_period=5):
         self.initially_exposed = initially_exposed
-        self.t = np.linspace(0, t_max, int(t_max / dt) + 1)     # points in time
+        self.dt = dt
+        self.update_max_time(t_max)
         self.S_init = 1 - initially_exposed / population_size     # susceptible (could contract disease
         self.E_init = initially_exposed / population_size         # exposed (infected but in incubation period)
         self.I_init = 0             # infected
@@ -19,6 +20,10 @@ class ModelParams:
         self.alpha = 1 / self.incubation_period            # inverse of the incubation period
         self.beta = beta            # average contact rate in the population
         self.gamma = gamma            # inverse of the mean infectious period
+        self.social_distancing = 1.0    # in range [0, 1], the higher the less social distance
+
+    def update_max_time(self, t_max):
+        self.t = np.linspace(0, t_max, int(t_max / self.dt) + 1)     # points in time
 
     def __str__(self):
         return f'initexposed{self.initially_exposed}_beta{self.beta:.2f}_gamma{self.gamma:.2f}_incub{self.incubation_period}'
