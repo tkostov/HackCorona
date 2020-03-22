@@ -77,6 +77,7 @@ function showHeatmap(heatdata, maxValue) {
 	{radius: 35,
 	blur: 25,
 	gradient: {0.0: 'blue', 0.5: 'lime', 1: 'red'},
+	max: 1
 	}).addTo(map);
 
 	return heatmap;

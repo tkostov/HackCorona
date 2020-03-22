@@ -24,4 +24,5 @@
   var heat = L.heatLayer([]).addTo(map);
 })('map', 7);
 
+document.getElementById("btnPercentage").classList.toggle('btn-dark');
 refreshMap(document.getElementById("rangeDays").value, document.getElementById("socialDistancing").checked ? 1 : 0);
