@@ -38,11 +38,13 @@ function refreshMap(day, socialDistancing) {
 	points2 = [];
 	var input = {};
 
-	callAPI('GET', INFECTIONS_DAY_PARAM.replace('_DAY_', day).replace('_FACTOR_', socialDistancing), input,
+	var requestURL = INFECTIONS_DAY_PARAM.replace('_DAY_', day).replace('_FACTOR_', socialDistancing);
+	callAPI('GET', requestURL, input,
 	function () {
 		tt = this;
 		var response = JSON.parse(this.response);
 		rs = response;
+		console.log(requestURL);
 		console.log(rs);
 		for (var i = 0; i < response.length; i++) {
 			var p = response[i];

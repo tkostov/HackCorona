@@ -16,5 +16,5 @@ slider.onchange = function() {
 };
 
 socialDistancing.onchange = function () {
-    app.refreshMap(slider.value - 1, socialDistancing.value === 'on' ? 1 : 0);
+    app.refreshMap(slider.value, socialDistancing.checked ? 1 : 0);
 };
