@@ -6,6 +6,7 @@ var additionalDays = document.getElementById("additionalDays");
 additionalDays.innerHTML = slider.value - 1;
 
 slider.oninput = function() {
+    app.slide(this.value - 1);
     additionalDays.innerHTML = this.value - 1;
 }	
 
