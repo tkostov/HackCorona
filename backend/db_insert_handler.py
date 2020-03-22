@@ -1,3 +1,4 @@
+from data_utils import get_absolute_and_relative_covid19_occurance
 from datetime import timedelta, date
 import os
 import pandas as pd
@@ -30,7 +31,6 @@ def insert_lk_geodata(collection):
     """
     Inserts the "landkreis" geodata into the given MongoDB collection.
     :param collection: the given MongoDB collection
-    :return:
     """
     with urllib.request.urlopen("https://public.opendatasoft.com/api/records/1.0/search/?dataset=landkreise-in-germany&rows=500&facet=iso&facet=name_0&facet=name_1&facet=name_2&facet=type_2&facet=engtype_2&refine.name_0=Germany") as url:
         data = json.loads(url.read().decode())["records"]
@@ -38,12 +38,11 @@ def insert_lk_geodata(collection):
         collection.insert_one(val)
 
 
-def insert_lk_overview_data(collection, data_path = "./bev_lk.xlsx"):
+def insert_lk_overview_data(collection, data_path = "../data/bev_lk.xlsx"):
     """
     Imports the "landkreis" overview data into the given MongoDB collection.
     :param collection: the given MongoDB collection
     :param data_path: the path to the overview data
-    :return:
     """
     df = pd.read_excel(data_path)
     df.columns = [x.replace(".", "") for x in df.columns]
@@ -52,19 +51,30 @@ def insert_lk_overview_data(collection, data_path = "./bev_lk.xlsx"):
         collection.insert_one(val)
 
 
+def insert_aggregated_cases_data(collection):
+    """
+    Inserts the aggregated cases for each lk into the MongoDB
+    :param collection: the given MongoDB collection
+    """
+    stats_df = get_absolute_and_relative_covid19_occurance()
+    stats_data = stats_df.to_dict('records')
+    for val in stats_data:
+        collection.insert_one(val)
+
 def main():
     """
     loading the needed data
-    :return:
     """
     client = MongoClient(f'mongodb://{os.getenv("USR_")}:{os.getenv("PWD_")}@{os.getenv("REMOTE_HOST")}:{os.getenv("REMOTE_PORT")}/{os.getenv("AUTH_DB")}')
     db = client[os.getenv("MAIN_DB")]
     rki_collection = db["rkidata"]
     lk_collection = db["lkdata"]
     lk_overview_collection = db["lk_overview"]
+    lk_aggregated_collection = db["lk_aggregated"]
     insert_lk_geodata(lk_collection)
     insert_rki_data(rki_collection)
     insert_lk_overview_data(lk_overview_collection)
+    insert_aggregated_cases_data(lk_aggregated_collection)
 
 
 if __name__ == "__main__":
