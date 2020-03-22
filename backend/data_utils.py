@@ -17,6 +17,15 @@ def load_absolute_case_numbers():
     rki_collection = db["rkidata"]
     data = pd.DataFrame(list(rki_collection.find()))
     data["Landkreis"] = [x.replace("LK ", "") for x in data["Landkreis"]]
+    rename_dict = {
+        "Altenkirchen": "Altenkirchen (Westerwald)",
+        "Bitburg-Prüm": "Eifelkreis Bitburg-Prüm",
+        "Landsberg a.Lech": "Landsberg am Lech",
+        "Lindau": "Lindau (Bodensee)",
+        "Saar-Pfalz-Kreis": "Saarpfalz-Kreis",
+        "Sankt Wendel": "St. Wendel"
+    }
+    data["Landkreis"] = data["Landkreis"].replace(rename_dict)
     data = data.sort_values(by=['Landkreis'])
     return data
 
@@ -53,7 +62,7 @@ def load_landkreis_information():
     lk_collection = db["lk_overview"]
     data = pd.DataFrame(list(lk_collection.find()))
     data = data.sort_values(by=['Kreisfreie Stadt\nKreis / Landkreis'])
-    data = data[data["Regionale Bezeichnung"] == "Landkreis"]
+    data = data[(data["Regionale Bezeichnung"] == "Kreis") | (data["Regionale Bezeichnung"] == "Landkreis")]
     return data
 
 
