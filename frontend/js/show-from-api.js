@@ -1,8 +1,5 @@
 // the API for Infections (no filtering for now!)
-// var INFECTIONS = "http://ec2-3-122-224-7.eu-central-1.compute.amazonaws.com:8080/lk_infections";
-let INFECTIONS = 'http://ec2-3-122-224-7.eu-central-1.compute.amazonaws.com:8080/lk_infections?days=0&factor=1';
-// @TODO: work with the following url in the slide function, if the api providing the data.
-// let INFECTIONS_DAY_PARAM = 'http://ec2-3-122-224-7.eu-central-1.compute.amazonaws.com:8080/lk_infections?days=_DAY_&factor=1';
+let INFECTIONS_DAY_PARAM = 'http://ec2-3-122-224-7.eu-central-1.compute.amazonaws.com:8080/lk_infections?days=_DAY_&factor=_FACTOR_';
 
 function callAPI(method, page, params, onloadF) {
 	var xhr = new XMLHttpRequest();
@@ -40,7 +37,7 @@ function heatmapFunctionPercentage() {
 	points2 = [];
 	var input = {};
 
-	callAPI('GET', INFECTIONS, input,
+	callAPI('GET', INFECTIONS_DAY_PARAM.replace('_DAY_', 0), input,
 		function () {
 			//log(this);
 			tt = this;
@@ -61,27 +58,29 @@ function heatmapFunctionPercentage() {
 }
 
 function slide(day) {
+	refreshMap(day, );
+}
+
+function refreshMap(day, socialDistancing) {
 	points2 = [];
 	var input = {};
 
-	let INFECTIONS_DAY_PARAM;
+	callAPI('GET', INFECTIONS_DAY_PARAM.replace('_DAY_', day).replace('_FACTOR_', socialDistancing), input,
+	function () {
+		tt = this;
+		var response = JSON.parse(this.response);
+		rs = response;
+		for (var i = 0; i < response.length; i++) {
+			var p = response[i];
+			var g2d = p.geo_point_2d;
+			points2.push([g2d[0], g2d[1], p.AnzahlFall]);
+		}
+		var max = getMax(points2);
+		// dummy point
+		points2.push([16.373703, 10.410084, 1000000]);
 
-	// @TODO: work with the following url in the slide function, if the api providing the data.
-	// INFECTIONS_DAY_PARAM = INFECTIONS_DAY_PARAM.replace('_DAY_', day);
-	INFECTIONS_DAY_PARAM = INFECTIONS;
-	callAPI('GET', INFECTIONS_DAY_PARAM, input,
-		function () {
-			//log(this);
-			tt = this;
-			var response = JSON.parse(this.response);
-			rs = response;
-			for (var i = 0; i < response.length; i++) {
-				var p = response[i];
-				var g2d = p.geo_point_2d;
-				points2.push([g2d[0], g2d[1], p.AnzahlFall]);
-			}
-			showHeatmap(points2, getMax(points2));
-		});
+		showHeatmap(points2, getMax(points2));
+	});
 }
 
 function heatmapFunctionAbsolute() {
@@ -89,7 +88,7 @@ function heatmapFunctionAbsolute() {
 
 	var input = {};
 
-	callAPI('GET', INFECTIONS, input,
+	callAPI('GET', INFECTIONS_DAY_PARAM.replace('_DAY_', 0), input,
 		function () {
 			//log(this);
 			tt = this;
@@ -111,7 +110,6 @@ function heatmapFunctionAbsolute() {
 
 
 var heatmap = null;
-var ratio = 200.0; // I don't like the ration / why is this value so large needed?
 
 function cleanHeatmap() {
 	map.removeLayer(heatmap);
@@ -119,15 +117,15 @@ function cleanHeatmap() {
 }
 
 function showHeatmap(heatdata, maxValue) {
-	if (heatmap === null) {
-		heatmap = L.heatLayer(heatdata, 
-		{radius: 35, max: maxValue / ratio,
-		blur: 25,
-		gradient: {0.0: 'blue', 0.5: 'lime', 1: 'red'}
-		}).addTo(map);
-	} else {
+	if (heatmap !== null) {
 		cleanHeatmap();
 	}
-	
+
+	heatmap = L.heatLayer(heatdata,
+	{radius: 35,
+	blur: 25,
+	gradient: {0.0: 'blue', 0.5: 'lime', 1: 'red'}
+	}).addTo(map);
+
 	return heatmap;
 }

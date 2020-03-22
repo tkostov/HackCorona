@@ -4,11 +4,8 @@
     <title>Wir Vs. Virus Simulator</title>
     <meta charset="UTF-8">
     <link rel="shortcut icon" type="image/x-icon" href="images/favicon.ico">
-    <link
-      rel="stylesheet"
-      href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css"
-    />
-    <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <link rel="stylesheet" type="text/css" href="css/style.css" />
     <link
@@ -63,7 +60,7 @@
                 <input
                   type="range"
                   min="1"
-                  max="100"
+                  max="30"
                   value="0"
                   class="slider"
                   id="rangeDays"
@@ -86,11 +83,9 @@
             <div class="col-md-12">
               <input
                 type="checkbox"
-                id="vehicle1"
-                name="vehicle1"
-                value="Bike"
+                id="socialDistancing"
               />
-              <label for="vehicle1">Ausgangssperre</label>
+              <label for="socialDistancing">Ausgangssperre</label>
             </div>
           </div>
           <hr />

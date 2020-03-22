@@ -7,7 +7,8 @@ L.HeatLayer = (L.Layer ? L.Layer : L.Class).extend({
         maxZoom: 18,
         radius: 20,
         blur: 0,
-        max: 1.0,
+        max: 1000000.0,
+        min: 0
     },
 
     initialize: function (latlngs, options) {

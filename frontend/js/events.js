@@ -6,16 +6,13 @@ let app = new Vue({
   // define methods under the `methods` object
   methods: {
     heatmapFunctionPercentage: function (event) {
-      cleanHeatmap();
       heatmapFunctionPercentage();
     },
     heatmapFunctionAbsolute: function (event) {
-      cleanHeatmap();
       heatmapFunctionAbsolute();
     },
-    slide: function (day) {
-      cleanHeatmap();
-      slide(day);
+    refreshMap: function (day, socialDist) {
+      refreshMap(day, socialDist);
     }
   }
-})
+});
