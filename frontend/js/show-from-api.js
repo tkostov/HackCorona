@@ -33,8 +33,33 @@ var tt = null;
 var rs = null;
 
 // heatmapFunctionCases + heatmapFunctionDeads COULD be merged!!!
-function heatmapFunctionCases() {
+function heatmapFunctionPercentage() {
 	points2 = [];
+	var input = {};
+
+	callAPI('GET', INFECTIONS, input,
+		function () {
+			//log(this);
+			tt = this;
+			var response = JSON.parse(this.response);
+			rs = response;
+			for (var i = 0; i < response.length; i++) {
+				var p = response[i];
+				var g2d = p.geo_point_2d;
+				points2.push([g2d[0], g2d[1], p.RelativFall]);
+			}
+			showHeatmap(points2, getMax(points2));
+			if ( document.getElementById("btnPercentage").classList.contains('btn-secondary') )
+				document.getElementById("btnPercentage").classList.toggle('btn-dark');
+			if ( document.getElementById("btnAbsolute").classList.contains('btn-dark') )
+				document.getElementById("btnPercentage").classList.toggle('btn-dark');
+
+		});
+}
+
+function heatmapFunctionAbsolute() {
+	points2 = [];
+
 	var input = {};
 
 	callAPI('GET', INFECTIONS, input,
@@ -49,26 +74,10 @@ function heatmapFunctionCases() {
 				points2.push([g2d[0], g2d[1], p.AnzahlFall]);
 			}
 			showHeatmap(points2, getMax(points2));
-		});
-}
-
-function heatmapFunctionDeads() {
-	points2 = [];
-
-	var input = {};
-
-	callAPI('GET', INFECTIONS, input,
-		function () {
-			//log(this);
-			tt = this;
-			var response = JSON.parse(this.response);
-			rs = response;
-			for (var i = 0; i < response.length; i++) {
-				var p = response[i];
-				var g2d = p.geo_point_2d;
-				points2.push([g2d[0], g2d[1], p.AnzahlTodesfall]);
-			}
-			showHeatmap(points2, getMax(points2));
+			if ( document.getElementById("btnAbsolute").classList.contains('btn-secondary') )
+				document.getElementById("btnAbsolute").classList.toggle('btn-dark');
+			if ( document.getElementById("btnPercentage").classList.contains('btn-dark') )
+				document.getElementById("btnPercentage").classList.toggle('btn-dark');
 		});
 }
 

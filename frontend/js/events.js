@@ -5,13 +5,13 @@ let app = new Vue({
   },
   // define methods under the `methods` object
   methods: {
-    heatmapFunctionCases: function (event) {
+    heatmapFunctionPercentage: function (event) {
       cleanHeatmap();
-      heatmapFunctionCases();
+      heatmapFunctionPercentage();
     },
-    heatmapFunctionDeads: function (event) {
+    heatmapFunctionAbsolute: function (event) {
       cleanHeatmap();
-      heatmapFunctionDeads();
+      heatmapFunctionAbsolute();
     }
   }
 })
