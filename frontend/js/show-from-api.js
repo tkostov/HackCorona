@@ -31,6 +31,7 @@ return max;
 var points2 = [];
 var tt = null;
 var rs = null;
+var type = 'percentage';
 
 
 function refreshMap(day, socialDistancing) {
@@ -46,11 +47,13 @@ function refreshMap(day, socialDistancing) {
 		for (var i = 0; i < response.length; i++) {
 			var p = response[i];
 			var g2d = p.geo_point_2d;
-			points2.push([g2d[0], g2d[1], p.AnzahlFall]);
+			if(type.localeCompare('percentage')){
+				points2.push([g2d[0], g2d[1], p.RelativFall]);
+			} else {
+				points2.push([g2d[0], g2d[1], p.AnzahlFall]);
+			}
 		}
 		var max = getMax(points2);
-		// dummy point
-		points2.push([16.373703, 10.410084, 1000000]);
 
 		showHeatmap(points2, getMax(points2));
 	});
@@ -71,7 +74,7 @@ function showHeatmap(heatdata, maxValue) {
 	heatmap = L.heatLayer(heatdata,
 	{radius: 35,
 	blur: 25,
-	gradient: {0.0: 'blue', 0.5: 'lime', 1: 'red'}
+	gradient: {0.0: 'blue', 0.5: 'lime', 1: 'red'},
 	}).addTo(map);
 
 	return heatmap;
