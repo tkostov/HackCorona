@@ -32,6 +32,9 @@ var points2 = [];
 var tt = null;
 var rs = null;
 var type = 'percentage';
+var maxPercentage = 0.5;
+var maxAbsolute = 5;
+var max = 0;
 
 
 function refreshMap(day, socialDistancing) {
@@ -51,14 +54,14 @@ function refreshMap(day, socialDistancing) {
 			var g2d = p.geo_point_2d;
 			if(type === 'percentage'){
 				points2.push([g2d[0], g2d[1], p.RelativFall]);
-				console.log('percentage');
+				max = maxPercentage;
 			} else {
 				points2.push([g2d[0], g2d[1], p.AnzahlFall]);
+				max = maxAbsolute;
 			}
 		}
-		var max = getMax(points2);
 
-		showHeatmap(points2, getMax(points2));
+		showHeatmap(points2, max);
 	});
 }
 
@@ -78,7 +81,7 @@ function showHeatmap(heatdata, maxValue) {
 	{radius: 35,
 	blur: 25,
 	gradient: {0.0: 'blue', 0.5: 'lime', 1: 'red'},
-	max: 5
+	max: maxValue
 	}).addTo(map);
 
 	return heatmap;
