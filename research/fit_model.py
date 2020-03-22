@@ -74,6 +74,7 @@ def trim_first_infected(data, incubation_pepriod):
 
 def fit(actual_infected, population):
     """
+    :param actual_infected Infected as a fraction of population
     :return: Fitted parameters for one specific Landkreis
     """
 
@@ -100,7 +101,7 @@ def get_predictions(social_distancing_params: list, days: int) -> np.array:
     """
     :param social_distancing_params: social distancing parameters in range [0, 1]
     :param days: How many days to predict into the future
-    :return: Future predictions of infected people with shape: (Social Distancing Param, Day, Landkreis)
+    :return: Future predictions of fraction of infected people with shape: (Social Distancing Param, Day, Landkreis)
     """
 
     historical_data_lk, population_lk = load_data()
@@ -110,7 +111,8 @@ def get_predictions(social_distancing_params: list, days: int) -> np.array:
     infected_lk = historical_data_lk.values.T
     for i, infected, lk_id in zip(range(len(infected_lk)), infected_lk, lk_ids):
         population = population_lk[lk_id]
-        best_param, trimmed_day = fit(infected, population)
+        infected_normalized = infected / population
+        best_param, trimmed_day = fit(infected_normalized, population)
         best_param.update_max_time(days - trimmed_day - 1)
         for j, social_distancing_param in enumerate(social_distancing_params):
             best_param.social_distancing = social_distancing_param
