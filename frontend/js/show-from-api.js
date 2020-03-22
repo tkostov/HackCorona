@@ -95,8 +95,8 @@ function cleanHeatmap() {
 function showHeatmap(heatdata, maxValue) {
 	if (heatmap == null) {
 		heatmap = L.heatLayer(heatdata, 
-		{radius: 50, max: maxValue / ratio,
-		blur: 50,
+		{radius: 35, max: maxValue / ratio,
+		blur: 25,
 		gradient: {0.0: 'blue', 0.5: 'lime', 1: 'red'}
 		}).addTo(map);
 	} else {
