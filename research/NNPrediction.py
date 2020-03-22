@@ -19,10 +19,21 @@ from daRnn.constants import device
 
 # This software is largely based on the GitHub code:
 # https://github.com/Seanny123/da-rnn
+# which is based on this blog post:
+# https://chandlerzuo.github.io/blog/2017/11/darnn
+# which is based on this paper:
+# A Dual-Stage Attention-based recurrent neural network for time series prediction
+# by Qin, Son, Chen, Cheng, Jiang and Cottrell, ArXiv 1704.02971v4
+# https://arxiv.org/pdf/1704.02971.pdf
+#
+# The underlying network is based on two LSTMs (Long-Short Term Memory) coupled to an
+# attention mechanism (for feature selection)
 # which can be found under the daRnn directory. Only minor modifications were made to it.
-
+#
+# Potential problem: the original code states: (c)2017-2026 CHANDLER ZUO ALL RIGHTS PRESERVED
+#
 def retrieveData():
-    dl = json_to_pandas.DataLoader(from_back_end=True)  # instanciate DataLoader
+    dl = json_to_pandas.DataLoader(from_back_end=True)  # instantiate DataLoader
     data_dict = dl.process_data()  # loads and forms the data dictionary
     rki_data = data_dict["RKI_Data"]  # only RKI dataframe
     return rki_data
@@ -70,7 +81,10 @@ logger = daRnn.utils.setup_log()
 logger.info(f"Using computation device: {device}")
 
 rki_data = retrieveData()
-rki_data.shape
+if rki_data.shape[0] == 0:
+    raise ValueError('retrieved empty database from backend.')
+else:
+    print('Loaded data. Found ' + str(rki_data.shape[0]) + ' entries.')
 rki_data.sort_values('Meldedatum', axis=0, ascending=True, inplace=True, na_position='last')
 
 CumulSumCase, CumulSumDead, Labels = cumulate(rki_data)
@@ -80,13 +94,14 @@ CumulFemale = np.sum(CumulSumCase[:, :, :, 1], axis=(1, 2))
 CumulMaleD = np.sum(CumulSumDead[:, :, :, 0], axis=(1, 2))
 CumulFemaleD = np.sum(CumulSumDead[:, :, :, 1], axis=(1, 2))
 doPlot=False
-if doPlot:
+if doPlot: # just a test to plot the cumulative data
     plot(CumulMale,label='M case'); plot(CumulFemale,label='W case')
     legend();title('Deutschland');xlabel('days')
     figure()
     plot(CumulMaleD,label='M deaths'); plot(CumulFemaleD,label='W deaths')
     legend();title('Deutschland');xlabel('days')
 
+# add some extra data to "predict"
 NumDays = int(CumulSumCase.shape[0])
 Flattened = np.reshape(CumulSumCase,[NumDays,np.prod(CumulSumCase.shape)//NumDays])
 indices =['CumulMale','CumulFemale','CumulMaleD','CumulFemaleD'] + list(range(0,Flattened.shape[1]))
@@ -97,19 +112,23 @@ Flattened = np.concatenate((tmp,Flattened),axis=1)
 raw_data = pandas.DataFrame(Flattened,columns=indices)
 
 logger.info(f"Shape of data: {raw_data.shape}.\nMissing in data: {raw_data.isnull().sum().sum()}.")
-targ_cols = ('CumulMale','CumulFemale')
+targ_cols = None # ('CumulMale','CumulFemale')
 data, scaler = daRnn.prediction.preprocess_data(raw_data, targ_cols)
 
 save_plots=False
 # da_rnn_kwargs = {"batch_size": 128, "T": 10}
 da_rnn_kwargs = {"batch_size": 128, "T": 10}
-config, model = daRnn.prediction.da_rnn(data, n_targs=len(targ_cols),
+timesToTrain = 0.8 # 80% is used as training, rest to predict and compare
+config, model = daRnn.prediction.da_rnn(data, n_targs=data.targs.shape[1],
                                         encoder_hidden_size=32, decoder_hidden_size=32,
-                                        learning_rate=.001,logger=logger, **da_rnn_kwargs)
+                                        learning_rate=.001,logger=logger,
+                                        timesToTrain=timesToTrain, **da_rnn_kwargs)
 # iter_loss, epoch_loss = train(model, data, config, n_epochs=10, save_plots=save_plots)
 iter_loss, epoch_loss = daRnn.prediction.train(model, data, config, n_epochs=10,
                         save_plots=save_plots, logger=logger)
-final_y_pred = daRnn.prediction.predict(model, data, config.train_size, config.batch_size, config.T)
+
+timeToPredict= 20 # data.targs.shape[0]
+final_y_pred = daRnn.prediction.predict(model, data, config.train_size, config.batch_size, timeToPredict) # config.T
 
 plt.figure()
 plt.semilogy(range(len(iter_loss)), iter_loss)
@@ -121,8 +140,9 @@ daRnn.utils.save_or_show_plot("epoch_loss.png", save_plots)
 
 plt.figure()
 plt.plot(final_y_pred, label='Predicted')
-plt.plot(data.targs[config.train_size:], label="True")
+plt.plot(data.targs[config.train_size:], label="True") # select only the untrained region
 plt.legend(loc='upper left')
+plt.title('Prediction beyond training')
 daRnn.utils.save_or_show_plot("final_predicted.png", save_plots)
 
 with open(os.path.join("data", "da_rnn_kwargs.json"), "w") as fi:
