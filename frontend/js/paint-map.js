@@ -24,4 +24,4 @@
   var heat = L.heatLayer([]).addTo(map);
 })('map', 7);
 
-// heatmapFunctionCases();
+heatmapFunctionCases();
