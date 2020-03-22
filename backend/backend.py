@@ -3,6 +3,10 @@ from bson.json_util import dumps
 from pymongo import MongoClient
 app = Flask(__name__)
 
+# load environment variables
+from dotenv import load_dotenv
+load_dotenv()
+
 
 @app.route("/rki_data/all")
 def get_rki_data():
