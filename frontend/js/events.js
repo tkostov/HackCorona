@@ -12,6 +12,10 @@ let app = new Vue({
     heatmapFunctionDeads: function (event) {
       cleanHeatmap();
       heatmapFunctionDeads();
+    },
+    slide: function (day) {
+      cleanHeatmap();
+      slide(day);
     }
   }
 })
