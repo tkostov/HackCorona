@@ -4,9 +4,9 @@ from joblib import delayed, Parallel
 import numpy as np
 from tqdm import tqdm
 from pymongo import MongoClient
-from bson.json_util import dumps as js_dumps
 from dotenv import load_dotenv
 import os
+import requests
 
 
 # How to use -> view at bottom of file
@@ -19,32 +19,17 @@ import os
 # get data
 
 class DataLoader(object):
-    def __init__(self, from_back_end=False):
+    def __init__(self):
         load_dotenv()
-        if not from_back_end:
-            self.backend = False  #
-            self.url = "https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_COVID19/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=json"
-        else:
-            self.backend = True
 
     def pull_data(self):
-        if self.backend:
-            pwd = os.getenv("PWD_")
-            usr = os.getenv("USR_")
-            hostname = os.getenv("REMOTE_HOST")
-            client = MongoClient(
-                f"mongodb://{usr}:{pwd}@{hostname}:27017/wirvsvirus")
-            db = client["wirvsvirus"]
-            rki_collection = db["rkidata"]
-            return list(rki_collection.find())
-        else:
-            return requests.get(self.url).json()
+        return requests.get('http://ec2-3-122-224-7.eu-central-1.compute.amazonaws.com:8080/daily_data').json()
 
     @staticmethod
     def parse_row(row_dict):
         # TODO we need to better parameterize this and then use the starmap to process the cols
         cols = ['IdBundesland', 'Bundesland', 'Landkreis', 'Altersgruppe', 'Geschlecht', 'AnzahlFall',
-                'AnzahlTodesfall', 'ObjectId', 'Meldedatum', 'IdLandkreis']
+                'AnzahlTodesfall', 'ObjectId', 'Meldedatum', 'IdLandkreis', 'Bev Insgesamt']
 
         if "attributes" in row_dict:
             row_dict = row_dict["attributes"]
@@ -58,13 +43,8 @@ class DataLoader(object):
 
     def reshape_data(self, data_dict):
         field_names = ['IdBundesland', 'Bundesland', 'Landkreis', 'Altersgruppe', 'Geschlecht', 'AnzahlFall',
-                       'AnzahlTodesfall', 'ObjectId', 'Meldedatum', 'IdLandkreis']
-
-        if self.backend:
-            entries = data_dict
-        else:
-            entries = data_dict["features"]
-        entries = Parallel(n_jobs=32)(delayed(DataLoader.parse_row)(x) for x in tqdm(entries))
+                       'AnzahlTodesfall', 'ObjectId', 'Meldedatum', 'IdLandkreis', 'Bev Insgesamt']
+        entries = Parallel(n_jobs=1)(delayed(DataLoader.parse_row)(x) for x in tqdm(data_dict))
         rki_dataset = pd.DataFrame(entries, columns=field_names)
 
         data_dict_ = dict()
