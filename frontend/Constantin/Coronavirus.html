@@ -1,0 +1,226 @@
+﻿<html><head>
+  <title>Corona Tracker - Test HeatMap</title>
+  <meta charset="utf-8">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+  
+  <link rel="stylesheet" type="text/css" href="bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="style.css">
+    <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
+  
+  <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+ 
+  <!-- LEAFLET part -->
+  	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js" integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg==" crossorigin=""></script>
+
+ <script src="https://leaflet.github.io/Leaflet.heat/dist/leaflet-heat.js"></script>
+ <script src="leaflet-easybutton_2.4.0.js"></script>
+ <script type="text/javascript" src="points.js"></script>
+ <script type="text/javascript" src="hospitals.js"></script>
+ <script type="text/javascript" src="coronaHeatmaps.js"></script>
+ <link href="leaflet-easybutton_2.4.0.css" rel="stylesheet">
+ <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
+ 
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+		}
+		#map {
+			width: 600px;
+			height: 800px;
+		}
+	</style>
+
+	<style>#map { width: 100%; height: 100%; }
+.info { padding: 6px 8px; font: 14px/16px Arial, Helvetica, sans-serif; background: white; background: rgba(255,255,255,0.8); box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; } .info h4 { margin: 0 0 5px; color: #777; }
+.legend { text-align: left; line-height: 18px; color: #555; } .legend i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.7; }</style>
+
+
+</head>
+
+<body>
+<div id="map"/>
+
+
+<script>
+var debug = true;
+
+function onMapClick(e) {
+	console.log('[' + e.latlng.lat + ',' + e.latlng.lng + ']');
+}
+
+var map;
+
+function loadMap(id, zoomLevel) {
+	map = L.map('map').setView([50.640280, 9.898626], zoomLevel);
+		L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', 
+	{
+		maxZoom: 15,
+		minZoom: 5,
+		attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
+			'<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+			'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+		id: 'mapbox.light'
+	}).addTo(map);
+}
+
+
+var maxValue = getMax(points);
+
+var hList;
+function showHospitals() {
+
+if (hList == null) {
+   hList = [];
+	for(var i = 0; i < hospitals.length; i++){
+	   var h = hospitals[i];
+		var circle = L.circle([h[1], h[2]], {
+		color: 'red',
+		fillColor: '#f03',
+		fillOpacity: 0.5,
+		radius: 300
+	   }).addTo(map);
+	   
+	   circle.bindPopup(h[0]);
+	   
+	   hList.push(circle);
+	}
+	}
+else {
+	for(var i = 0; i < hList.length; i++){
+	   var h = hList[i];
+	   h.removeFrom(map);
+     }
+	 hList = null;
+	}	
+}
+
+/*var sList;
+function showSuperMarkets() {
+
+if (sList == null) {
+   sList = [];
+	for(var i = 0; i < supermarkets.length; i++){
+	   var h = supermarkets[i];
+		var circle = L.circle([h[1], h[2]], {
+		color: 'green',
+		fillColor: 'lightgray',
+		fillOpacity: 0.5,
+		radius: 300
+	   }).addTo(map);
+	   
+	   circle.bindPopup(h[0]);
+	   
+	   sList.push(circle);
+	}
+	}
+else {
+	for(var i = 0; i < sList.length; i++){
+	   var s = sList[i];
+	   s.removeFrom(map);
+     }
+	 sList = null;
+	}	
+} */
+
+function heatmapFunction() {
+
+		if (heatmap == null) {
+			showHeatmapOld(points, maxValue);
+		}
+		else {
+			showHeatmapOld([]);
+		}
+ }
+
+function heatmapFunction2() {
+    points2= [];
+	if (heatmap == null) {
+			 var response = lk_data;
+			 rs = response;
+			
+			for (var i = 0; i < response.length; i++) {
+			   // logText(i);
+				var p = response[i];
+				var f = p.fields;
+				var g2d = f.geo_point_2d;
+				
+				// logText(g2d);
+				// one line from the response JSON Array:
+				// {"_id": {"$oid": "5e771708ce867013b21af0e7"}, "datasetid": "landkreise-in-germany", 
+				// "fields": {"name_2": "Biberach", "name_0": "Germany", "name_1": "Baden-W\u00fcrttemberg", "cca_2": "08426", "engtype_2": "District", 
+				// "geo_point_2d": [48.1075826288, 9.77425436647], "hasc_2": "DE.BW.BR", "id_2": 4, "type_2": "Landkreis", "id_0": 86, "id_1": 1, "iso": "DEU", 
+				
+				//  which one?? "id_2": 4, "id_0": 86, "id_1": 1,
+				
+				points2.push([g2d[0], g2d[1], f.id_0]); 
+				//points2.push([g2d[0], g2d[1], f.id_1]); // what is this?
+				// points2.push([g2d[0], g2d[1], f.id_2]); // what is this?
+			}
+			showHeatmap(points2, getMax(points2));
+	}
+	else {
+		showHeatmap([]);
+	}
+}
+
+
+
+function showHeatmapOld(heatdata, maxValue) {
+	if (heatmap == null) {
+		heatmap = L.heatLayer(heatdata, 
+		{radius: 50, max: maxValue,
+		blur: 50,
+		gradient: {0.0: 'blue', 0.5: 'lime', 1: 'red'}
+		}).addTo(map);
+	} else {
+		heatmap.removeFrom(map);
+		heatmap = null;
+	}
+	
+	return heatmap;
+}
+
+function prepareButtons(mobile) {
+	map.addControl(new L.Control.Fullscreen({title: {
+        'false': 'Vollbild anzeigen',
+        'true': 'Vollbildmodus beenden'
+    }
+	}));	
+	
+	L.easyButton( 'fa-map', heatmapFunctionCases, "Heatmap Cases anzeigen").addTo(map);
+	L.easyButton( 'fa-map', heatmapFunctionDeads, "Heatmap Deads anzeigen").addTo(map);
+	L.easyButton( 'fa-flag', showHospitals, "Krankenhäuser anzeigen").addTo(map);
+	// L.easyButton( 'fa-flag', showSuperMarkets, "Supermarkets anzeigen").addTo(map);
+}
+
+function logText(v) {
+	if (debug) console.log(v);
+}
+function log(v) {
+	if (debug) console.log("Received: " + v.response);
+}
+
+
+function onMapClick(e) {
+	logText('[' + e.latlng.lat + ',' + e.latlng.lng + ']');
+}
+
+
+
+</script>
+
+<script>
+	var sm = document.getElementById("map");
+	sm.style.height = "100%";
+	sm.style.width = "100%";
+	
+	loadMap("map", 7);
+	prepareButtons();
+	map.on('click', this.onMapClick);
+</script>	
+
+</body></html>
