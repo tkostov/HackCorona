@@ -49,10 +49,10 @@ function heatmapFunctionPercentage() {
 				points2.push([g2d[0], g2d[1], p.RelativFall]);
 			}
 			showHeatmap(points2, getMax(points2));
-			if ( document.getElementById("btnPercentage").classList.contains('btn-secondary') )
+			if ( document.getElementById("btnPercentage").classList.contains('btn-secondary') && !document.getElementById("btnPercentage").classList.contains('btn-dark'))
 				document.getElementById("btnPercentage").classList.toggle('btn-dark');
 			if ( document.getElementById("btnAbsolute").classList.contains('btn-dark') )
-				document.getElementById("btnPercentage").classList.toggle('btn-dark');
+				document.getElementById("btnAbsolute").classList.toggle('btn-dark');
 
 		});
 }
@@ -74,7 +74,7 @@ function heatmapFunctionAbsolute() {
 				points2.push([g2d[0], g2d[1], p.AnzahlFall]);
 			}
 			showHeatmap(points2, getMax(points2));
-			if ( document.getElementById("btnAbsolute").classList.contains('btn-secondary') )
+			if ( document.getElementById("btnAbsolute").classList.contains('btn-secondary') && !document.getElementById("btnAbsolute").classList.contains('btn-dark') )
 				document.getElementById("btnAbsolute").classList.toggle('btn-dark');
 			if ( document.getElementById("btnPercentage").classList.contains('btn-dark') )
 				document.getElementById("btnPercentage").classList.toggle('btn-dark');
