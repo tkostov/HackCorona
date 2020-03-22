@@ -49,8 +49,9 @@ function refreshMap(day, socialDistancing) {
 		for (var i = 0; i < response.length; i++) {
 			var p = response[i];
 			var g2d = p.geo_point_2d;
-			if(type.localeCompare('percentage')){
+			if(type === 'percentage'){
 				points2.push([g2d[0], g2d[1], p.RelativFall]);
+				console.log('percentage');
 			} else {
 				points2.push([g2d[0], g2d[1], p.AnzahlFall]);
 			}
@@ -77,7 +78,7 @@ function showHeatmap(heatdata, maxValue) {
 	{radius: 35,
 	blur: 25,
 	gradient: {0.0: 'blue', 0.5: 'lime', 1: 'red'},
-	max: 1
+	max: 5
 	}).addTo(map);
 
 	return heatmap;
