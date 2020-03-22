@@ -24,4 +24,4 @@
   var heat = L.heatLayer([]).addTo(map);
 })('map', 7);
 
-heatmapFunctionPercentage();
+refreshMap(document.getElementById("rangeDays").value - 1, document.getElementById("socialDistancing").value === 'on' ? 1 : 0);

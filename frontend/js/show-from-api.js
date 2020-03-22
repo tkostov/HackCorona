@@ -32,34 +32,6 @@ var points2 = [];
 var tt = null;
 var rs = null;
 
-// heatmapFunctionCases + heatmapFunctionDeads COULD be merged!!!
-function heatmapFunctionPercentage() {
-	points2 = [];
-	var input = {};
-
-	callAPI('GET', INFECTIONS_DAY_PARAM.replace('_DAY_', 0), input,
-		function () {
-			//log(this);
-			tt = this;
-			var response = JSON.parse(this.response);
-			rs = response;
-			for (var i = 0; i < response.length; i++) {
-				var p = response[i];
-				var g2d = p.geo_point_2d;
-				points2.push([g2d[0], g2d[1], p.RelativFall]);
-			}
-			showHeatmap(points2, getMax(points2));
-			if ( document.getElementById("btnPercentage").classList.contains('btn-secondary') && !document.getElementById("btnPercentage").classList.contains('btn-dark'))
-				document.getElementById("btnPercentage").classList.toggle('btn-dark');
-			if ( document.getElementById("btnAbsolute").classList.contains('btn-dark') )
-				document.getElementById("btnAbsolute").classList.toggle('btn-dark');
-
-		});
-}
-
-function slide(day) {
-	refreshMap(day, );
-}
 
 function refreshMap(day, socialDistancing) {
 	points2 = [];
@@ -70,6 +42,7 @@ function refreshMap(day, socialDistancing) {
 		tt = this;
 		var response = JSON.parse(this.response);
 		rs = response;
+		console.log(rs);
 		for (var i = 0; i < response.length; i++) {
 			var p = response[i];
 			var g2d = p.geo_point_2d;
@@ -82,32 +55,6 @@ function refreshMap(day, socialDistancing) {
 		showHeatmap(points2, getMax(points2));
 	});
 }
-
-function heatmapFunctionAbsolute() {
-	points2 = [];
-
-	var input = {};
-
-	callAPI('GET', INFECTIONS_DAY_PARAM.replace('_DAY_', 0), input,
-		function () {
-			//log(this);
-			tt = this;
-			var response = JSON.parse(this.response);
-			rs = response;
-			for (var i = 0; i < response.length; i++) {
-				var p = response[i];
-				var g2d = p.geo_point_2d;
-				points2.push([g2d[0], g2d[1], p.AnzahlFall]);
-			}
-			showHeatmap(points2, getMax(points2));
-			if ( document.getElementById("btnAbsolute").classList.contains('btn-secondary') && !document.getElementById("btnAbsolute").classList.contains('btn-dark') )
-				document.getElementById("btnAbsolute").classList.toggle('btn-dark');
-			if ( document.getElementById("btnPercentage").classList.contains('btn-dark') )
-				document.getElementById("btnPercentage").classList.toggle('btn-dark');
-		});
-}
-
-
 
 var heatmap = null;
 

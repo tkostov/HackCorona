@@ -5,11 +5,21 @@ let app = new Vue({
   },
   // define methods under the `methods` object
   methods: {
-    heatmapFunctionPercentage: function (event) {
-      heatmapFunctionPercentage();
+    heatmapFunctionPercentage: function (day, socialDist) {
+      refreshMap(day, socialDist);
+
+      if ( document.getElementById("btnPercentage").classList.contains('btn-secondary') && !document.getElementById("btnPercentage").classList.contains('btn-dark'))
+          document.getElementById("btnPercentage").classList.toggle('btn-dark');
+      if ( document.getElementById("btnAbsolute").classList.contains('btn-dark') )
+          document.getElementById("btnAbsolute").classList.toggle('btn-dark');
     },
-    heatmapFunctionAbsolute: function (event) {
-      heatmapFunctionAbsolute();
+    heatmapFunctionAbsolute: function (day, socialDist) {
+      refreshMap(day, socialDist);
+
+      if ( document.getElementById("btnAbsolute").classList.contains('btn-secondary') && !document.getElementById("btnAbsolute").classList.contains('btn-dark') )
+          document.getElementById("btnAbsolute").classList.toggle('btn-dark');
+      if ( document.getElementById("btnPercentage").classList.contains('btn-dark') )
+          document.getElementById("btnPercentage").classList.toggle('btn-dark');
     },
     refreshMap: function (day, socialDist) {
       refreshMap(day, socialDist);
