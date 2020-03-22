@@ -106,18 +106,21 @@ def get_predictions(social_distancing_params: list, days: int) -> np.array:
 
     historical_data_lk, population_lk = load_data()
     lk_ids = [x[1] for x in historical_data_lk.columns]
-
+    history_days = historical_data_lk.shape[0]
     predictions_lk = np.zeros(shape=(len(social_distancing_params), days, historical_data_lk.shape[1]))
     infected_lk = historical_data_lk.values.T
+
     for i, infected, lk_id in zip(range(len(infected_lk)), infected_lk, lk_ids):
         population = population_lk[lk_id]
         infected_normalized = infected / population
         best_param, trimmed_day = fit(infected_normalized, population)
-        best_param.update_max_time(days - trimmed_day - 1)
+        best_param.update_max_time(days - trimmed_day - 1 + history_days)
+
         for j, social_distancing_param in enumerate(social_distancing_params):
             best_param.social_distancing = social_distancing_param
             predictions = run(best_param)
-            predictions_lk[j, :, i] = np.concatenate((np.array([0] * trimmed_day), predictions))
+            # only take future predictions
+            predictions_lk[j, :, i] = predictions[history_days - trimmed_day:]
 
     return predictions_lk
 
