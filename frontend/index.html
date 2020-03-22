@@ -7,6 +7,7 @@
       href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css"
     />
     <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <link rel="stylesheet" type="text/css" href="css/style.css" />
     <link
       rel="stylesheet"
@@ -44,12 +45,12 @@
           </div>
           <div class="row">
             <div class="col-md-6">
-              <button type="button" class="btn btn-secondary">
+              <button type="button" class="btn btn-secondary" v-on:click="heatmapFunctionCases">
                 Infizierte
               </button>
             </div>
             <div class="col-md-6">
-              <button type="button" class="btn btn-secondary">
+              <button type="button" class="btn btn-secondary" v-on:click="heatmapFunctionDeads">
                 Verstorben
               </button>
             </div>
@@ -116,8 +117,12 @@
       </div>
     </div>
 
-    <script src="dist/leaflet-heat.js"></script>
+    <script src="temp-dist/leaflet-heat.js"></script>
     <script src="data/points.js"></script>
+    <script src="js/heat-layer.js"></script>
+    <script src="js/show-from-api.js"></script>
     <script src="js/paint-map.js"></script>
+<!--    <script src="js/events.js"></script>-->
+
   </body>
 </html>
