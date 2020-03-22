@@ -16,9 +16,12 @@
       id: 'mapbox.light'
     }).addTo(map);
 
-  addressPoints = addressPoints.map(function (p) {
-    return [p[0], p[1]];
-  });
+  // Old way to show the demo data
+  // addressPoints = addressPoints.map(function (p) {
+  //   return [p[0], p[1]];
+  // });
 
-  var heat = L.heatLayer(addressPoints).addTo(map);
+  var heat = L.heatLayer([]).addTo(map);
 })('map', 7);
+
+heatmapFunctionCases();

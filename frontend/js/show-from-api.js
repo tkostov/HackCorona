@@ -12,8 +12,7 @@ function callAPI(method, page, params, onloadF) {
 		} else { // show the result
 			xhr.onloadFunction();
 		}};
-	
-	logText("Calling: " + page);
+
 	xhr.send();
 }
 
@@ -38,8 +37,8 @@ function heatmapFunctionCases() {
     points2 = [];
 	if (heatmap == null) {
 		var input = {};
-		
-		callAPI('GET', INFECTIONS, input, 
+
+		callAPI('GET', INFECTIONS, input,
 		  function () {
 			//log(this);
 			  tt = this;
@@ -88,6 +87,7 @@ var heatmap = null;
 var ratio = 200.0; // I don't like the ration / why is this value so large needed?
 
 function cleanHeatmap() {
+	// let map = document.getElementById("map");
 	heatmap.removeFrom(map);
 	heatmap = null;
 }
