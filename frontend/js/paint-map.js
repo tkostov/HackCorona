@@ -24,4 +24,4 @@
   var heat = L.heatLayer([]).addTo(map);
 })('map', 7);
 
-refreshMap(document.getElementById("rangeDays").value - 1, document.getElementById("socialDistancing").checked ? 1 : 0);
+refreshMap(document.getElementById("rangeDays").value, document.getElementById("socialDistancing").checked ? 1 : 0);
