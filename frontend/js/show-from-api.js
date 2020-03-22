@@ -36,7 +36,7 @@ var tt = null;
 var rs = null;
 
 // heatmapFunctionCases + heatmapFunctionDeads COULD be merged!!!
-function heatmapFunctionCases() {
+function heatmapFunctionPercentage() {
 	points2 = [];
 	var input = {};
 
@@ -49,9 +49,14 @@ function heatmapFunctionCases() {
 			for (var i = 0; i < response.length; i++) {
 				var p = response[i];
 				var g2d = p.geo_point_2d;
-				points2.push([g2d[0], g2d[1], p.AnzahlFall]);
+				points2.push([g2d[0], g2d[1], p.RelativFall]);
 			}
 			showHeatmap(points2, getMax(points2));
+			if ( document.getElementById("btnPercentage").classList.contains('btn-secondary') && !document.getElementById("btnPercentage").classList.contains('btn-dark'))
+				document.getElementById("btnPercentage").classList.toggle('btn-dark');
+			if ( document.getElementById("btnAbsolute").classList.contains('btn-dark') )
+				document.getElementById("btnAbsolute").classList.toggle('btn-dark');
+
 		});
 }
 
@@ -79,7 +84,7 @@ function slide(day) {
 		});
 }
 
-function heatmapFunctionDeads() {
+function heatmapFunctionAbsolute() {
 	points2 = [];
 
 	var input = {};
@@ -93,9 +98,13 @@ function heatmapFunctionDeads() {
 			for (var i = 0; i < response.length; i++) {
 				var p = response[i];
 				var g2d = p.geo_point_2d;
-				points2.push([g2d[0], g2d[1], p.AnzahlTodesfall]);
+				points2.push([g2d[0], g2d[1], p.AnzahlFall]);
 			}
 			showHeatmap(points2, getMax(points2));
+			if ( document.getElementById("btnAbsolute").classList.contains('btn-secondary') && !document.getElementById("btnAbsolute").classList.contains('btn-dark') )
+				document.getElementById("btnAbsolute").classList.toggle('btn-dark');
+			if ( document.getElementById("btnPercentage").classList.contains('btn-dark') )
+				document.getElementById("btnPercentage").classList.toggle('btn-dark');
 		});
 }
 
