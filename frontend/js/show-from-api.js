@@ -88,7 +88,6 @@ var ratio = 200.0; // I don't like the ration / why is this value so large neede
 
 function cleanHeatmap() {
 	map.removeLayer(heatmap);
-	L.heatLayer([]).addTo(map);
 }
 
 function showHeatmap(heatdata, maxValue) {
