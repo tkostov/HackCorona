@@ -1,4 +1,4 @@
-// "name","latitude","longitude"
+﻿// "name","latitude","longitude"
 var hospitals =  [
 ["Zahnarztpraxis Feichtner",48.1125081,11.5511035],
 ["Notaufnahme",52.3842872,9.8062291],
