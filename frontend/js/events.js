@@ -6,11 +6,11 @@ let app = new Vue({
   // define methods under the `methods` object
   methods: {
     heatmapFunctionCases: function (event) {
-      console.log('Triiger A');
+      cleanHeatmap();
       heatmapFunctionCases();
     },
     heatmapFunctionDeads: function (event) {
-      console.log('Triiger B');
+      cleanHeatmap();
       heatmapFunctionDeads();
     }
   }

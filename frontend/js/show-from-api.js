@@ -34,51 +34,42 @@ var rs = null;
 
 // heatmapFunctionCases + heatmapFunctionDeads COULD be merged!!!
 function heatmapFunctionCases() {
-    points2 = [];
-	if (heatmap == null) {
-		var input = {};
+	points2 = [];
+	var input = {};
 
-		callAPI('GET', INFECTIONS, input,
-		  function () {
+	callAPI('GET', INFECTIONS, input,
+		function () {
 			//log(this);
-			  tt = this;
-			 var response = JSON.parse(this.response);
-			 rs = response;
+			tt = this;
+			var response = JSON.parse(this.response);
+			rs = response;
 			for (var i = 0; i < response.length; i++) {
 				var p = response[i];
 				var g2d = p.geo_point_2d;
 				points2.push([g2d[0], g2d[1], p.AnzahlFall]);
 			}
 			showHeatmap(points2, getMax(points2));
-		   });
-	}
-	else {
-		showHeatmap([]); // wipes the old heatmap!
-	}
+		});
 }
 
 function heatmapFunctionDeads() {
-    points2 = [];
-	if (heatmap == null) {
-		var input = {};
-		
-		callAPI('GET', INFECTIONS, input, 
-		  function () {
+	points2 = [];
+
+	var input = {};
+
+	callAPI('GET', INFECTIONS, input,
+		function () {
 			//log(this);
-			  tt = this;
-			 var response = JSON.parse(this.response);
-			 rs = response;
+			tt = this;
+			var response = JSON.parse(this.response);
+			rs = response;
 			for (var i = 0; i < response.length; i++) {
 				var p = response[i];
 				var g2d = p.geo_point_2d;
 				points2.push([g2d[0], g2d[1], p.AnzahlTodesfall]);
 			}
 			showHeatmap(points2, getMax(points2));
-		   });
-	}
-	else {
-		showHeatmap([]); // wipes the old heatmap!
-	}
+		});
 }
 
 
@@ -88,6 +79,7 @@ var ratio = 200.0; // I don't like the ration / why is this value so large neede
 
 function cleanHeatmap() {
 	map.removeLayer(heatmap);
+	heatmap = null;
 }
 
 function showHeatmap(heatdata, maxValue) {
