@@ -87,13 +87,12 @@ var heatmap = null;
 var ratio = 200.0; // I don't like the ration / why is this value so large needed?
 
 function cleanHeatmap() {
-	// let map = document.getElementById("map");
-	heatmap.removeFrom(map);
-	heatmap = null;
+	map.removeLayer(heatmap);
+	L.heatLayer([]).addTo(map);
 }
 
 function showHeatmap(heatdata, maxValue) {
-	if (heatmap == null) {
+	if (heatmap === null) {
 		heatmap = L.heatLayer(heatdata, 
 		{radius: 50, max: maxValue / ratio,
 		blur: 50,
