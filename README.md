@@ -1,15 +1,11 @@
-#HackCorona Team @ WirVsCorona Hackathon
+#HackCorona Team @ [WirVsCorona Hackathon](https://wirvsvirushackathon.org)
 
-##Rules of the game:
-* Please no Force pushes
-* Comments are good
-* Branches are good
-* @PythonDevs please do not push the whole virtualenvs
-* Separate requirements.txt for each team?
-* **No Hard Pushes**
+Visualize and see the current corona-outbreak situation in our area, region or country and simulate its spread in the nearest future according to parameters like a ban on going out. This shows how the situation is likely to change in the future and what happens if people follow the stated rules.
+
+![Track the virus web application](https://i.imgur.com/WZx6ps6.png)
 
 
-## Struktur
+## Structure
 * research/
 * backend/
 * frontend/
