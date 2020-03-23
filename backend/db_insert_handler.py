@@ -59,6 +59,8 @@ def insert_aggregated_cases_data(collection):
     stats_df = get_absolute_and_relative_covid19_occurance()
     stats_data = stats_df.to_dict('records')
     for val in stats_data:
+        val["TageInZukunft"] = 0
+        val["Ausgangssperre"] = 100
         collection.insert_one(val)
 
 def main():
@@ -71,9 +73,7 @@ def main():
     lk_collection = db["lkdata"]
     lk_overview_collection = db["lk_overview"]
     lk_aggregated_collection = db["lk_aggregated"]
-    insert_lk_geodata(lk_collection)
-    insert_rki_data(rki_collection)
-    insert_lk_overview_data(lk_overview_collection)
+    # ll
     insert_aggregated_cases_data(lk_aggregated_collection)
 
 
