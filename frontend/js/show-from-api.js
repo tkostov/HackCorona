@@ -31,7 +31,7 @@ return max;
 var points2 = [];
 var tt = null;
 var rs = null;
-var type = 'percentage';
+var type = 'absolute';
 var maxPercentage = 0.0005;
 var maxAbsolute = 5;
 var max = 0;
