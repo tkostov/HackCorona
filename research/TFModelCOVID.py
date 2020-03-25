@@ -206,21 +206,21 @@ def showResults(allRes, showAllStates=False):
     S = np.sum(Scal[:, 0],-1);C = np.sum(Scal[:, 1],-1);
     CR = np.sum(Scal[:, 2],-1);D = np.sum(Scal[:, 3],-1)
 
-    toPlot = np.transpose(np.stack([S, C, CR, D, I, Q, H, HIC, Sq]))
+    toPlot = np.transpose(np.stack([S, C*10, CR*10, D*10, I*10, Q*10, H*10, HIC*10, Sq]))
     plt.figure('States');
     plt.plot(toPlot);
-    plt.legend(['S', 'C', 'CR', 'D', 'I', 'Q', 'H', 'HIC', 'Sq'])
+    plt.legend(['S', 'C (x10)', 'CR (x10)', 'D (x10)', 'I (x10)', 'Q (x10)', 'H (x10)', 'HIC (x10)', 'Sq'])
     plt.xlabel('days');plt.ylabel('population')
 
     plt.figure('Infected, Reported, Dead');
-    allReported = Q + H # + C + D # all infected reported
-    plt.plot(I); plt.plot(allReported)
-    plt.plot(D); plt.plot(C+CR);
+    allReported = Q + H + HIC  # + C + D # all infected reported
+    plt.plot(I); plt.plot(10*allReported)
+    plt.plot(D*10); plt.plot((C+CR));
     myax=plt.gca(); maxY=myax.get_ylim()[1]
     plt.plot(Par.quarantineTrace * maxY)  # scale the quarantine trace for visualization only
     # plt.gca().set_xlim(myax.get_xlim());
-    plt.gca().set_ylim([0,maxY]);
-    plt.legend(['infected','reported','dead','cured=C+CR','quarantineTrace'])
+    plt.gca().set_ylim([-10,maxY]);
+    plt.legend(['infected','reported (x10)','dead (x10)','cured=C+CR','quarantineTrace'])
     plt.xlabel('days');plt.ylabel('population')
 
     if showAllStates:
@@ -230,6 +230,8 @@ def showResults(allRes, showAllStates=False):
         plt.imshow(Pop * np.squeeze(ev(allStatesQ1[:, 1, :])))
         plt.figure('H');
         plt.imshow(Pop * np.squeeze(ev(allStatesQ1[:, 2, :])))
+        plt.figure('HIC');
+        plt.imshow(Pop * np.squeeze(ev(allStatesQ1[:, 3, :])))
         plt.figure('Sq');
         plt.imshow(Pop * np.squeeze(ev(allStatesQ2)))
         plt.show()
@@ -258,15 +260,15 @@ SimTimes=80
 
 ChanceToDie = 0.2 * np.array([0,0,0.1,0.2,0.4,1.0],CalcFloatStr) # Age-dependent chance to die in intensive care
 
-Par = cPar(q=float(0.0), # quaranteened
-            ii=float(0.4), # chance/day to become infected by an infected person
+Par = cPar(q=float(0.0), # quarantined
+            ii=float(0.15), # chance/day to become infected by an infected person
             iq=float(0.0000), # chance/day to become infected by a reported quarantened
             ih=float(0.0000), # chance/day to become infected while visiting the hospital
             d=float(0.01), # chance/day to detect an infected person
             h=float(0.01), # chance/day to become ill and go to the hospital (should be desease-day dependent!)
             hic=float(0.2), # chance to become severely ill needing intensive care
             r = ChanceToDie, # chance to die at the hospital (should be age and day-dependent)
-            quarantineTrace = deltas([[30,0.3],[50,0.9]],SimTimes)
+            quarantineTrace = deltas([[30,0.3],[50,0.9]],SimTimes) # delta peaks represent a quarantine action (of the government)
             )
 
 allRes = buildStateModel(initState, Par, SimTimes)
