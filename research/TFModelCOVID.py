@@ -25,6 +25,271 @@ def Init(noCuda=False):
         os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
     tf.reset_default_graph() # currently just to shield tensorflow from the main program
 
+# Here some code from the inverse Modeling Toolbox (Rainer Heintzmann)
+
+def iterativeOptimizer(myTFOptimization, NIter, loss, session, verbose=False):
+    if NIter <= 0:
+        raise ValueError("NIter has to be positive")
+    myRunOptions = config_pb2.RunOptions(report_tensor_allocations_upon_oom=True)
+    for n in range(NIter):
+        summary, myloss = session.run([myTFOptimization,loss], options=myRunOptions)
+        if np.isnan(myloss):
+            raise ValueError("Loss is NaN. Aborting iteration.")
+        if verbose:
+            print(str(n) +"/" + str(NIter) + ": " + str(myloss))
+    return myloss, summary
+
+def optimizer(loss, otype = 'L-BFGS-B', NIter = 300, oparam = {'gtol': 0, 'learning_rate': None}, var_list = None, verbose = False):
+    """
+    defines an optimizer to be used with "Optimize"
+    This function combines various optimizers from tensorflow and SciPy (with tensorflow compatibility)
+
+    Parameters
+    ----------
+    loss : the loss function, which is a tensor that has been initialized but contains variables
+    otype (default: L-BFGS-B : The method of optimization to be used the following optioncs exist:
+        from Tensorflow:
+            sgrad
+            nesterov
+            adadelta
+            adam
+            proxgrad
+        and from SciPy all the optimizers in the package tf.contrib.opt.ScipyOptimizerInterface
+    NIter (default: 300) : Number of iterations to be used
+    oparam : a dictionary to be passed to the detailed optimizers containing optimization parameters (e.g. "learning-rate"). See the individual documentation
+    var_list (default: None meaning all) : list of tensorflow variables to be used during minimization
+    verbose (default: False) : prints the loss during iterations if True
+
+    Returns
+    -------
+    an optimizer funtion (or lambda function)
+
+    See also
+    -------
+
+    Example
+    -------
+    """
+    if NIter <= 0:
+        raise ValueError("nIter has to be positive")
+    optimStep=0
+    if (var_list is not None) and not np.iterable(var_list):
+        var_list = [var_list]
+    # these optimizer types work strictly stepwise
+    if otype == 'test':
+        print("setting up sgrad optimization with ",NIter," iterations.")
+        optimStep = lambda loss: TestGrad(loss) # 1.0
+    elif otype == 'sgrad':
+        learning_rate = oparam["learning_rate"]
+        print("setting up sgrad optimization with ",NIter," iterations.")
+        optimStep = lambda loss: tf.train.GradientDescentOptimizer(1e4).minimize(loss, var_list=var_list) # 1.0
+    elif otype == 'nesterov':
+        learning_rate = oparam["learning_rate"]
+        print("setting up nesterov optimization with ",NIter," iterations.")
+        optimStep = lambda loss: tf.train.MomentumOptimizer(1e4, use_nesterov=True, momentum=1e-4).minimize(loss, var_list=var_list) # 1.0
+    elif otype == 'adam':
+        learning_rate = oparam["learning_rate"]
+        if learning_rate == None:
+            learning_rate = 0.3
+        print("setting up adam optimization with ",NIter," iterations, learning_rate: ", learning_rate, ".")
+        optimStep = lambda loss: tf.train.AdamOptimizer(learning_rate,0.9,0.999).minimize(loss, var_list=var_list) # 1.0
+    elif otype == 'adadelta':
+        learning_rate = oparam["learning_rate"]
+        print("setting up adadelta optimization with ",NIter," iterations.")
+        optimStep = lambda loss: tf.train.AdadeltaOptimizer(0.01,0.9,0.999).minimize(loss, var_list=var_list) # 1.0
+    elif otype == 'proxgrad':
+        print("setting up proxgrad optimization with ",NIter," iterations.")
+        optimStep = lambda loss: tf.train.ProximalGradientDescentOptimizer(0.0001).minimize(loss, var_list=var_list) # 1.0
+    if optimStep != 0:
+        myoptim = optimStep(loss)
+        return lambda session: iterativeOptimizer(myoptim, NIter, loss, session=session, verbose=verbose)
+    # these optimizers perform the whole iteration
+    else:  #otype=='L-BFGS-B':
+#        if not 'maxiter' in oparam:
+        oparam = dict(oparam) # make a shallow copy
+        oparam['maxiter'] = NIter
+        if oparam['learning_rate']==None:
+            del oparam['learning_rate']
+        if not 'gtol' in oparam:
+            oparam['gtol']= 0
+        myOptimizer = tf.contrib.opt.ScipyOptimizerInterface(loss, options=oparam, method=otype, var_list=var_list)
+        return lambda session: myOptimizer.minimize(session) # 'L-BFGS-B'
+
+
+def Reset():
+    tf.reset_default_graph()  # clear everything on the GPU
+
+
+# def Optimize(Fwd,Loss,tfinit,myoptimizer=None,NumIter=40,PreFwd=None):
+def Optimize(myoptimizer=None, loss=None, NumIter=40, TBSummary=False, TBSummaryDir="C:\\NoBackup\\TensorboardLogs\\", Eager=False, resVars=None):
+    """
+    performs the tensorflow optimization given a loss function and an optimizer
+
+    The optimizer currently also needs to know about the loss, which is a (not-yet evaluated) tensor
+
+    Parameters
+    ----------
+    myoptimizer : an optimizer. See for example "optimizer" and its arguments
+    loss : the loss function, which is a tensor that has been initialized but contains variables
+    NumIter (default: 40) : Number of iterations to be used, in case that no optimizer is provided. Otherwise this argument is NOT used but the optimizer knows about the number of iterations.
+    TBSummary (default: False) : If True, the summary information for tensorboard is stored
+    TBSummaryDir (default: "C:\\NoBackup\\TensorboardLogs\\") : The directory whre the tensorboard information is stored.
+    Eager (default: False) : Use eager execution
+    resVars (default: None) : Which tensors to evaluate and return at the end.
+
+    Returns
+    -------
+    a tuple of tensors
+
+    See also
+    -------
+
+    Example
+    -------
+    """
+    if Eager:
+        tf.enable_eager_execution()
+    if myoptimizer is None:
+        myoptimizer = lambda session, loss: optimizer(session, loss, NIter=NumIter)  # if none was provided, use the default optimizer
+
+    #    with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as session:
+    with tf.Session() as session:
+        #        with tf.name_scope('input_reshape'):
+        #            if (tf.rank(tfin).eval() > 1):
+        #                image_shaped_input = tf.reshape(tfin, [-1, myinit.shape[0], myinit.shape[1], 1])
+        #                tf.summary.image('tfin', image_shaped_input, 10)
+
+        myRunOptions = config_pb2.RunOptions(report_tensor_allocations_upon_oom=True)
+        session.run(tf.global_variables_initializer(), options=myRunOptions)  # report_tensor_allocations_upon_oom
+        session.run(tf.local_variables_initializer(), options=myRunOptions)  # for adam and alike
+        if loss != None:
+            mystartloss = loss.eval()
+
+        start_time = time.time()
+        if TBSummary:
+            summary = myoptimizer(session)
+        else:
+            myoptimizer(session)
+        duration = time.time() - start_time
+        #        if TBSummary:
+        #            tb_writer = tf.summary.FileWriter(TBSummaryDir + 'Optimize', session.graph)
+        #            merged = tf.summary.merge_all()
+        #            summary = session.run(merged)
+        #            tb_writer.add_summary(summary, 0)
+        if loss != None:
+            myloss = loss.eval()
+            print('Execution time:', duration, '. Start Loss:', mystartloss, ', Final Loss: ', myloss, '. Relative loss:', myloss / mystartloss)
+        else:
+            print('Execution time:', duration)
+
+        if resVars == None and loss != None:
+            return myloss
+        else:
+            res = []
+            if isinstance(resVars, list) or isinstance(resVars, tuple):
+                for avar in resVars:
+                    if not isinstance(avar, tf.Tensor) and not isinstance(avar, tf.Variable):
+                        print("WARNING: Variable " + str(avar) + " is NOT a tensor.")
+                        res.append(avar)
+                    else:
+                        try:
+                            res.append(nip.image(avar.eval()))
+                        except ValueError:
+                            print("Warning. Could not evaluate result variable" + avar.name + ". Returning [] for this result.")
+                            res.append([])
+            else:
+                res = nip.image(resVars.eval())
+        return res
+    #    nip.view(toshow)
+
+
+# %% this section defines a number of loss functions. Note that they often need fixed input arguments for measured data and sometimes more parameters
+def Loss_FixedGaussian(fwd, meas, lossDataType=None, checkScaling=False):
+    if lossDataType is None:
+        lossDataType = defaultLossDataType
+    if checkScaling:
+        fwd = doCheckScaling(fwd, meas)
+
+    with tf.name_scope('Loss_FixedGaussian'):
+        #       return tf.reduce_sum(tf.square(fwd-meas))  # version without normalization
+        if iscomplex(fwd.dtype.as_numpy_dtype):
+            mydiff = (fwd - meas)
+            return tf.reduce_mean(tf.cast(mydiff * tf.conj(mydiff), lossDataType)) / tf.reduce_mean(
+                tf.cast(meas, lossDataType))  # to make everything scale-invariant. The TF framework hopefully takes care of precomputing this
+        else:
+            return tf.reduce_mean(tf.cast(tf.square(fwd - meas), lossDataType)) / tf.reduce_mean(
+                tf.cast(meas, lossDataType))  # to make everything scale-invariant. The TF framework hopefully takes care of precomputing this
+
+
+def Loss_ScaledGaussianReadNoise(fwd, meas, RNV=1.0, lossDataType=None, checkScaling=False):
+    if lossDataType is None:
+        lossDataType = defaultLossDataType
+    if checkScaling:
+        fwd = doCheckScaling(fwd, meas)
+    offsetcorr = tf.cast(np.mean(np.log(meas + RNV)), lossDataType)  # this was added to have the ideal fit yield a loss equal to zero
+
+    with tf.name_scope('Loss_ScaledGaussianReadNoise'):
+        XMinusMu = tf.cast(meas - fwd, lossDataType)
+        muPlusC = tf.cast(fwd + RNV, lossDataType)
+        Fwd = tf.log(muPlusC) + tf.square(XMinusMu) / muPlusC
+        #       Grad=Grad.*(1.0-2.0*XMinusMu-XMinusMu.^2./muPlusC)./muPlusC;
+        return tf.reduce_mean(Fwd) - offsetcorr  # to make everything scale-invariant. The TF framework hopefully takes care of precomputing this
+
+
+# @tf.custom_gradient
+def Loss_Poisson(fwd, meas, Bg=0.05, checkPos=False, lossDataType=None, checkScaling=False):
+    if lossDataType is None:
+        lossDataType = defaultLossDataType
+    if checkScaling:
+        fwd = doCheckScaling(fwd, meas)
+
+    with tf.name_scope('Loss_Poisson'):
+        #       meas[meas<0]=0
+        meanmeas = np.mean(meas)
+        #    NumEl=tf.size(meas)
+        if checkPos:
+            fwd = ((tf.sign(fwd) + 1) / 2) * fwd
+        FwdBg = tf.cast(fwd + Bg, lossDataType)
+        totalError = tf.reduce_mean((FwdBg - meas) - meas * tf.log(
+            (FwdBg) / (meas + Bg))) / meanmeas  # the modification in the log normalizes the error. For full normalization see PoissonErrorAndDerivNormed
+        #       totalError = tf.reduce_mean((fwd-meas) - meas * tf.log(fwd)) / meanmeas  # the modification in the log normalizes the error. For full normalization see PoissonErrorAndDerivNormed
+        #        def grad(dy):
+        #            return dy*(1.0 - meas/(fwd+Bg))/meanmeas
+        #        return totalError,grad
+        return totalError
+
+
+def Loss_Poisson2(fwd, meas, Bg=0.05, checkPos=False, lossDataType=None, checkScaling=False):
+    if lossDataType is None:
+        lossDataType = defaultLossDataType
+    if checkScaling:
+        fwd = doCheckScaling(fwd, meas)
+
+    with tf.name_scope('Loss_Poisson2'):
+        #       meas[meas<0]=0
+        meanmeas = np.mean(meas)
+        #    NumEl=tf.size(meas)
+        if checkPos:
+            fwd = ((tf.sign(fwd) + 1) / 2) * fwd  # force positive
+
+        #       totalError = tf.reduce_mean((fwd-meas) - meas * tf.log(fwd)) / meanmeas  # the modification in the log normalizes the error. For full normalization see PoissonErrorAndDerivNormed
+        @tf.custom_gradient
+        def BarePoisson(myfwd):
+            def grad(dy):
+                mygrad = dy * (1.0 - meas / (myfwd + Bg)) / meas.size  # the size accounts for the mean operation (rather than sum)
+                #                image_shaped_input = tf.reshape(mygrad, [-1, mygrad.shape[0], mygrad.shape[1], 1])
+                #                tf.summary.image('mygrad', image_shaped_input, 10)
+                return mygrad
+
+            toavg = (myfwd + Bg - meas) - meas * tf.log((myfwd + Bg) / (meas + Bg))
+            toavg = tf.cast(toavg, lossDataType)
+            totalError = tf.reduce_mean(toavg)  # the modification in the log normalizes the error. For full normalization see PoissonErrorAndDerivNormed
+            return totalError, grad
+
+        return BarePoisson(fwd) / meanmeas
+
+# ---- End of code from the inverse Modelling Toolbox
+
 def newState(S,Sq,I,Q,H,HIC,C,CR,D):
     """
     alocates and initializes a new single time state of the mode.
