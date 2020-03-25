@@ -1,3 +1,4 @@
+import datetime
 from flask import Flask, request
 from flask_cors import CORS
 from bson.json_util import dumps
@@ -73,6 +74,22 @@ def get_lk_overview():
     return dumps(list(lk_collection.find())), 200
 
 
+@app.route("/all_infections")
+def get_lk_all():
+    client = MongoClient(f'mongodb://{os.getenv("USR_")}:{os.getenv("PWD_")}@{os.getenv("REMOTE_HOST")}:{os.getenv("REMOTE_PORT")}/{os.getenv("AUTH_DB")}')
+    db = client[os.getenv("MAIN_DB")]
+    lk_aggregated_collection = db["lk_aggregated"]
+    json_data = {"fields": [{"name": "AnzahlFall", "format": "", "type": "integer"},
+                {"name": "latitude", "format": "", "type": "real"}, {"name": "longitude", "format": "", "type": "real"},
+                {"name": "day", "format":"YYYY-M-D H:m:s", "type": "timestamp"}]}
+    rows_data = []
+    backend_data = list(lk_aggregated_collection.find())
+    for x in backend_data:
+        rows_data.append([x["AnzahlFall"], x["geo_point_2d"][0], x["geo_point_2d"][1], (datetime.datetime.now() + datetime.timedelta(days=x["TageInZukunft"])).strftime("%Y-%m-%d %H:%M:%S")])
+    json_data["rows"] = rows_data
+    return dumps(json_data), 200
+
+
 @app.route("/lk_infections")
 def get_lk_aggregated_infections():
     """
@@ -96,8 +113,7 @@ def run_simulation():
     Runs the simulation and stores the output in the MongoDB.
     :return:
     """
-    client = MongoClient(f'mongodb://{os.getenv("USR_")}:{os.getenv("PWD_")}@{os.getenv("REMOTE_HOST")}:{os.getenv(
-        "REMOTE_PORT")}/{os.getenv("AUTH_DB")}')
+    client = MongoClient(f'mongodb://{os.getenv("USR_")}:{os.getenv("PWD_")}@{os.getenv("REMOTE_HOST")}:{os.getenv("REMOTE_PORT")}/{os.getenv("AUTH_DB")}')
     db = client[os.getenv("MAIN_DB")]
     lk_pre = db["lk_aggregated"]
     lk_collection_data = pd.DataFrame(list(db["lkdata"].find()))
