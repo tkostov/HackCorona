@@ -409,11 +409,11 @@ def advanceQueue(oldQueue,input=None):
     """
     output = oldQueue[-1]
     if input is None:
-        tmp = tf.constant(np.zeros(oldQueue.shape[-1], CalcFloatStr))
+        tmp = tf.constant(np.zeros(oldQueue.shape[1:], CalcFloatStr))
         myQueue = tf.concat(([tmp], oldQueue[:-1]), axis=0)
     else:
         if isinstance(input, NumberTypes) and np.ndarray(input).ndim < oldQueue.shape[-1]:
-            input = tf.constant(input * np.ones(oldQueue.shape[-1],CalcFloatStr))
+            input = tf.constant(input * np.ones(oldQueue.shape[1:],CalcFloatStr))
         myQueue = tf.concat(([input], oldQueue[:-1]), axis=0)
     return myQueue, output
 
@@ -685,16 +685,23 @@ def showFit(measured, fitcurve):
 # Age structure from:
 # https://de.statista.com/statistik/daten/studie/1365/umfrage/bevoelkerung-deutschlands-nach-altersgruppen/
 # crude approximation by moving some numbers around...:
+dat = retrieveData()
 Pop = 1e6*np.array([(3.88+0.78),6.62,2.31+2.59+3.72+15.84, 23.9, 15.49, 7.88], CalcFloatStr)
+AgeDist = (Pop / np.sum(Pop))
+PopTotalLK = dat.groupby(by='IdLandkreis').sum()["Bev Insgesamt"] # .to_dict()  # population of each district
+LKPopulation = (AgeDist * PopTotalLK[:,np.newaxis]).astype(CalcFloatStr)
+# THIS IS WRONG !!!! The total should be 80 Mio but is 243 Moi !!
+LKPopulation *= 82790000 / np.sum(LKPopulation)
 
 TPop = np.sum(Pop) # total population
-NumTimesQ = [14, Pop.shape[0]] # time spent in quarantine (for general public)
-NumTimes = [16, Pop.shape[0]] # Times spent in hospital
-NumAge =6
+NumLK = 393 # dat['IdLandkreis'].unique().shape # number of districts to simulate for (dimension: -3)
+NumTimesQ = [14, NumLK, LKPopulation.shape[-1]] # time spent in quarantine (for general public) in each district
+NumTimes = [16, NumLK, LKPopulation.shape[-1]] # Times spent in hospital in each district
+NumAge = 6 # represents the age groups according to the RKI
 
 I = tf.constant(np.zeros(NumTimes,CalcFloatStr));  # make the time line for infected ppl (dependent on day of desease)
 
-I0Var = tf.Variable(initial_value=1.0, name='I0')
+I0Var = tf.Variable(initial_value=LKPopulation, name='I0')
 Infected = I0Var * np.ones(NumAge,CalcFloatStr) # 5 infected of one age group to start with
 
 I,tmp = advanceQueue(I,Infected / TPop) # start with some infections
@@ -746,17 +753,16 @@ Par = cPar(
     quarantineTrace = 0.0 # deltas([[30,0.3],[50,0.9]],SimTimes) # delta peaks represent a quarantine action (of the government)
     )
 
-ToFit = ['ii']
+ToFit = [] #'ii' see above
 Par, allVars = PrepareFit(Par,ToFit)
 allVars = allVars + [I0Var]
 
 allRes = buildStateModel(initState, Par, SimTimes)
 (FinalState, allStatesScalar, allStatesQ1, allStatesQ2) = allRes
 
-dat = retrieveData()
 if True:
-    AllCumulCase, AllCumulDead, Indices = AllGermanReported = cumulate(dat)
-    AllGermanReported = np.sum(AllCumulCase,(1,2,3))
+    LKReported, AllCumulDead, Indices = cumulate(dat)
+    AllGermanReported = np.sum(LKReported,(1,2,3))
 else:
     dat["Meldedatum"] = pd.to_datetime(dat["Meldedatum"], unit="ms")
     qq = dat.groupby(["Meldedatum"]).aggregate(func="sum")[["AnzahlFall"]].reset_index()
@@ -764,16 +770,17 @@ else:
     Daten = qq["Meldedatum"]
     AllGermanReported = np.cumsum(qq['AnzahlFall'])
 
-df, population = load_data()
+# df, population = load_data()  # not needed for now
 
 #     df = dat.groupby(["Meldedatum"]).aggregate(func="sum")[["AnzahlFall"]].reset_index()
-reported, hospitalized, cured, dead = measuredStates(allRes,Pop, byAge=False)
+reported, hospitalized, cured, dead = measuredStates(allRes,Pop, byAge=True)
 
-loss = Loss_Poisson2(reported[0:AllGermanReported.shape[0]], AllGermanReported, Bg=0)
+# AllGermanReported
+loss = Loss_Poisson2(reported[0:LKReported.shape[0]], AllGermanReported, Bg=0)
 opt = optimizer(loss, otype="L-BFGS-B", NIter=20)
 res = Optimize(opt, loss=loss, resVars=allVars + [reported])
 
-showFit(AllGermanReported,fitcurve=res[-1])
+showFit(LKReported, fitcurve=res[-1])
 
 relativeAgeGroups = dat.groupby(['Altersgruppe']).aggregate(func="sum")[["AnzahlFall"]]
 # stateSum(FinalState)
