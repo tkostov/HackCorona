@@ -107,18 +107,18 @@ else:
 
 #     df = dat.groupby(["Meldedatum"]).aggregate(func="sum")[["AnzahlFall"]].reset_index()
 
-reported, hospitalized, cured, dead = measuredStates(allRes, LKPopulation, byAge=True)
+reported, hospitalized, cured, dead = covid.measuredStates(allRes, LKPopulation, byAge=True)
 # Lets simulate the initial states.
-showSimulation(allRes)
+covid.showSimulation(allRes)
 
 # AllGermanReported
 # loss = Loss_Poisson2(reported[0:LKReported.shape[0]], LKReported, Bg=0.1)
-loss = Loss_FixedGaussian(reported[0:LKReported.shape[0]], LKReported)
-opt = optimizer(loss, otype="L-BFGS-B", NIter=100)
+loss = covid.Loss_FixedGaussian(reported[0:LKReported.shape[0]], LKReported)
+opt = covid.optimizer(loss, otype="L-BFGS-B", NIter=100)
 # opt = optimizer(loss, otype="adam", oparam={"learning_rate": 0.3}, NIter=100)
-res = Optimize(opt, loss=loss, resVars=allVars + [reported])
+res = covid.Optimize(opt, loss=loss, resVars=allVars + [reported])
 
-showFit(LKReported, fitcurve=res[-1], indices=Indices)
+covid.showFit(LKReported, fitcurve=res[-1], indices=Indices)
 
 # relativeAgeGroups = dat.groupby(['Altersgruppe']).aggregate(func="sum")[["AnzahlFall"]]
 # stateSum(FinalState)
