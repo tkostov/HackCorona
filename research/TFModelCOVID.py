@@ -2,8 +2,7 @@ import tensorflow as tf
 from tensorflow.core.protobuf import config_pb2
 import numpy as np
 import os
-from fit_model import load_data
-import json_to_pandas
+# from fit_model import load_data
 import matplotlib.pyplot as plt
 import time
 import numbers
@@ -524,6 +523,7 @@ def buildStateModel(initState, Par, numTimes):
     return State, allStatesScalar, allStatesQ1, allStatesQ2
 
 def retrieveData():
+    import json_to_pandas
     dl = json_to_pandas.DataLoader()  # instantiate DataLoader #from_back_end=True
     data_dict = dl.process_data()  # loads and forms the data dictionary
     rki_data = data_dict["RKI_Data"]  # only RKI dataframe

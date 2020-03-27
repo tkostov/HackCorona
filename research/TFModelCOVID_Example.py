@@ -2,12 +2,15 @@ import tensorflow as tf
 from tensorflow.core.protobuf import config_pb2
 import numpy as np
 import TFModelCOVID as covid
+# import json_to_pandas
+
+CalcFloatStr = covid.CalcFloatStr
 
 # TPop = 82790000
 # Age structure from:
 # https://de.statista.com/statistik/daten/studie/1365/umfrage/bevoelkerung-deutschlands-nach-altersgruppen/
 # crude approximation by moving some numbers around...:
-dat = retrieveData() # loads the data from the server
+dat = covid.retrieveData() # loads the data from the server
 Pop = 1e6*np.array([(3.88+0.78),6.62,2.31+2.59+3.72+15.84, 23.9, 15.49, 7.88, 1.0], CalcFloatStr)
 AgeDist = (Pop / np.sum(Pop))
 
