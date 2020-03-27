@@ -30,7 +30,7 @@ NumAge = LKPopulation.shape[-1] # represents the age groups according to the RKI
 I0 = tf.constant(np.zeros(NumTimes,CalcFloatStr));  # make the time line for infected ppl (dependent on day of desease)
 I0Var = tf.Variable(initial_value=LKPopulation*0.0+10.0, name='I0Var')  # start with one in every age group and district
 Infected = I0Var # 10 infected of one age group to start with
-I0, tmp = advanceQueue(I0,Infected / TPop) # start with some infections
+I0, tmp = covid.advanceQueue(I0,Infected / TPop) # start with some infections
 
 S0 = (LKPopulation-Infected)/TPop; #  no time line here!
 
@@ -38,7 +38,7 @@ noQuarant = np.zeros(NumTimesQ,CalcFloatStr)
 noInfect = np.zeros(NumTimes,CalcFloatStr)
 noScalar = np.zeros(NumTimes[1:],CalcFloatStr)
 
-initState = newState(S = S0, Sq=noQuarant, I=I0, Iq=noInfect, Q=noInfect,
+initState = covid.newState(S = S0, Sq=noQuarant, I=I0, Iq=noInfect, Q=noInfect,
                      H=noInfect, HIC=noInfect, C=noScalar, CR=noScalar, D=noScalar) # Population
 
 # stateSum(initState)
@@ -49,28 +49,28 @@ SimTimes=80
 DangerPoint = NumAge // 2.0
 DangerSpread = 3.0
 TotalRateToDie = 0.1
-ChanceToDie = TotalRateToDie * sigmoid(NumAge, DangerPoint, DangerSpread) # Age-dependent chance to die in intensive care
+ChanceToDie = TotalRateToDie * covid.sigmoid(NumAge, DangerPoint, DangerSpread) # Age-dependent chance to die in intensive care
 
 # model the age distribution of being put into IC
 
 TotalRateICU = 0.01
-ChanceICU = sigmoid(NumAge, DangerPoint, DangerSpread) # Age-dependent chance to die in intensive care
+ChanceICU = covid.sigmoid(NumAge, DangerPoint, DangerSpread) # Age-dependent chance to die in intensive care
 
 # model the age-dependent change to become ill
 
 TotalRateToHospital = 0.1
-ChanceHospital = TotalRateToHospital * sigmoid(NumAge, DangerPoint, DangerSpread) # Age-dependent chance to die in intensive care
+ChanceHospital = TotalRateToHospital * covid.sigmoid(NumAge, DangerPoint, DangerSpread) # Age-dependent chance to die in intensive care
 
 #
 InfectionRateTotal = tf.Variable(initial_value = 50, name='ii',dtype=CalcFloatStr) # float(0.15/TPop)
 MeanInfectionDate = 5.0
 InfectionSpread = 2.0
 TimeOnly = [NumTimes[0],1,1] # Independent on Age, only on disease progression
-ChanceInfection = InfectionRateTotal * gaussian(TimeOnly, MeanInfectionDate, InfectionSpread) # Age-dependent chance to die in intensive care
+ChanceInfection = InfectionRateTotal * covid.gaussian(TimeOnly, MeanInfectionDate, InfectionSpread) # Age-dependent chance to die in intensive care
 
 # model the infection process in dependence of time
 
-Par = cPar(
+Par = covid.cPar(
     q=float(0.0), # quarantined. Will be replaced by the quantineTrace information!
     ii = ChanceInfection, # chance/day to become infected by an infected person
     # ii=float(2.88), # chance/day to become infected by an infected person
@@ -80,18 +80,18 @@ Par = cPar(
     h= ChanceHospital, # chance/day to become ill and go to the hospital (should be desease-day dependent!)
     hic = ChanceICU, # chance to become severely ill needing intensive care
     r = ChanceToDie, # chance to die at the hospital (should be age and day-dependent)
-    quarantineTrace = deltas([[30,0.3],[50,0.9]],SimTimes) # delta peaks represent a quarantine action (of the government)
+    quarantineTrace = covid.deltas([[30,0.3],[50,0.9]],SimTimes) # delta peaks represent a quarantine action (of the government)
     )
 
 ToFit = [] #'ii' see above
-Par, allVars = PrepareFit(Par,ToFit)
+Par, allVars = covid.PrepareFit(Par,ToFit)
 allVars = allVars + [I0Var, InfectionRateTotal]
 
-allRes = buildStateModel(initState, Par, SimTimes)
+allRes = covid.buildStateModel(initState, Par, SimTimes)
 (FinalState, allStatesScalar, allStatesQ1, allStatesQ2) = allRes
 
 if True:
-    LKReported, AllCumulDead, Indices = cumulate(dat)
+    LKReported, AllCumulDead, Indices = covid.cumulate(dat)
     if True: # no sex information
         LKReported = np.sum(LKReported,(-1))
         AllCumulDead = np.sum(AllCumulDead,(-1))
