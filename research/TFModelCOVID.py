@@ -715,7 +715,8 @@ def showFit(measured, fitcurve, LKs=[0,100,200], indices=None):
 dat = retrieveData()
 Pop = 1e6*np.array([(3.88+0.78),6.62,2.31+2.59+3.72+15.84, 23.9, 15.49, 7.88, 1.0], CalcFloatStr)
 AgeDist = (Pop / np.sum(Pop))
-Pop = [] # should not be used below
+
+# Pop = [] # should not be used below
 PopTotalLK = dat.groupby(by='IdLandkreis').sum()["Bev Insgesamt"] # .to_dict()  # population of each district
 LKPopulation = (AgeDist * PopTotalLK[:,np.newaxis]).astype(CalcFloatStr)
 # THIS IS WRONG !!!! The total should be 80 Mio but is 243 Moi !!
@@ -808,7 +809,7 @@ else:
 
 #     df = dat.groupby(["Meldedatum"]).aggregate(func="sum")[["AnzahlFall"]].reset_index()
 
-reported, hospitalized, cured, dead = measuredStates(allRes,Pop, byAge=True)
+reported, hospitalized, cured, dead = measuredStates(allRes, LKPopulation, byAge=True)
 # Lets simulate the initial states.
 showSimulation(allRes)
 
