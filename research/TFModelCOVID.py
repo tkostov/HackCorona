@@ -228,11 +228,13 @@ def iscomplex(mytype):
     mytype=str(datatype(mytype))
     return (mytype == "complex64") or (mytype == "complex128") or (mytype == "complex64_ref") or (mytype == "complex128_ref") or (mytype=="<dtype: 'complex64'>") or (mytype=="<dtype: 'complex128'>")
 
+def isNumber(val):
+    return isinstance(val,numbers.Number)
 
 def totensor(img):
     if istensor(img):
         return img
-    if (not isinstance(0.0,numbers.Number)) and ((img.dtype==defaultTFDataType) or (img.dtype==defaultTFCpxDataType)):
+    if (not isinstance(img,numbers.Number)) and ((img.dtype==defaultTFDataType) or (img.dtype==defaultTFCpxDataType)):
         img=tf.constant(img)
     else:
         if iscomplex(img):
@@ -374,19 +376,19 @@ class cState:
 
 class cPar:
     def __init__(self, q, ii, iq, ih, d, h, hic, r, NQ=14, NI=24, quarantineTrace=None):
-        self.q = tf.constant(q); # rate of susceptible being quarantened
-        self.ii = tf.constant(ii); # 2nd order rate of S infection by infected
-        self.iq = tf.constant(iq) # 2nd order rate of S infection by reported quarantened
-        self.ih = tf.constant(ih) # 2nd order rate of S infection by hospitalized
-        # self.qi = tf.constant(qi) # 2nd order rate of quarantened S by infected.  Assumption is that quarantened cannot be infected by hospitalized.
-        # self.qq = tf.constant(qq) # 2nd order rate of quarantened S by other quarantened (co-habitant).
-        self.d = tf.constant(d) # probability of an infection being detected and quarantened
-        self.h = tf.constant(h) # probability of an infected (reported or not) becoming ill and hospitalized
-        self.hic = tf.constant(h) # probability of a hospitalized person becoming severely ill needing an ICU
-        self.r = tf.constant(r) # probability of a severely ill person to die
+        self.q = totensor(q); # rate of susceptible being quarantined
+        self.ii = totensor(ii); # 2nd order rate of S infection by infected
+        self.iq = totensor(iq) # 2nd order rate of S infection by reported quarantined
+        self.ih = totensor(ih) # 2nd order rate of S infection by hospitalized
+        # self.qi = totensor(qi) # 2nd order rate of quarantined S by infected.  Assumption is that quarantined cannot be infected by hospitalized.
+        # self.qq = totensor(qq) # 2nd order rate of quarantined S by other quarantined (co-habitant).
+        self.d = totensor(d) # probability of an infection being detected and quarantined
+        self.h = totensor(h) # probability of an infected (reported or not) becoming ill and hospitalized
+        self.hic = totensor(h) # probability of a hospitalized person becoming severely ill needing an ICU
+        self.r = totensor(r) # probability of a severely ill person to die
         # self.c = tf.constant(c) # probability of a hospitalized person (after N days) being cured
-        self.NQ = tf.constant(NQ) # number of days for quarantene
-        self.NI = tf.constant(NI) # number of days to be infected
+        self.NQ = totensor(NQ) # number of days for quarantine
+        self.NI = totensor(NI) # number of days to be infected
         self.quarantineTrace = quarantineTrace;
 
 def newQueue(numTimes, entryVal=None):
@@ -454,8 +456,8 @@ def newTime(State, Par):
     # TotalQuarantined = getTotalQueue(State.Sq)# exclude the last bin from the chance of infection (to warrant total number)
     # infectionsQ = State.I * TotalQuarantined * Par.qi + TotalQuarantined * TotalQuarantined * Par.qq
     # stateSum(State)
-    Squarantened = State.S * Par.q # newly quarantined persons
-    # quarantened ppl getting infected during quarantine are neglected for now!
+    Squarantined = State.S * Par.q # newly quarantined persons
+    # quarantined ppl getting infected during quarantine are neglected for now!
     # now lets calculate and apply the transfers between queues
     I,Q = transferQueue(State.I, State.Q, Par.d) # infected ppl. get detected by the system
     I,Iq = transferQueue(State.I, State.Iq, Par.q) # quarantine of infected ppl. They will leave either by making it to the end of infection (cured) or being detected
@@ -465,16 +467,16 @@ def newTime(State, Par):
     H,HIC = transferQueue(H, State.HIC, Par.hic) # infected and hospitalized ppl. get detected by the system
     HIC,deaths = removeFromQueue(HIC, Par.r)  # deaths
     # now the time-dependent actions: advancing the queues and dequiing
-    Sq, dequarantened = advanceQueue(State.Sq, Squarantened)
-    Iq, Idequarantened = advanceQueue(State.Iq) # this queue was copied
+    Sq, dequarantined = advanceQueue(State.Sq, Squarantined)
+    Iq, Idequarantined = advanceQueue(State.Iq) # this queue was copied
     I, curedI = advanceQueue(I, infections)
     Q, curedQ = advanceQueue(Q, 0)
     HIC, backToHospital = advanceQueue(HIC, 0)  # surviving hospital or
     H, curedH = advanceQueue(H + backToHospital, 0) # surviving intensive care
     # finally work the dequeued into the states
-    C = State.C + curedI + Idequarantened  # the quarantined infected are considered "cured" if they reached the end of infection, even if still in quarantine
+    C = State.C + curedI + Idequarantined  # the quarantined infected are considered "cured" if they reached the end of infection, even if still in quarantine
     CR = State.CR + curedI + curedQ + curedH  # reported cured
-    S = State.S - infections  + dequarantened - Squarantened   # - infectionsQ
+    S = State.S - infections  + dequarantined - Squarantined   # - infectionsQ
     D = State.D + deaths
     # reportedInfections = tf.reduce_sum(I) + tf.reduce_sum(Q) + tf.reduce_sum(H) # all infected reported
 
@@ -491,7 +493,10 @@ def buildStateModel(initState, Par, numTimes):
     for t in range(numTimes):
         print('Building model for timepoint',t)
         if quarantineTrace is not None:
-            Par.q = quarantineTrace[t]
+            if isNumber(quarantineTrace):
+                Par.Q = quarantineTrace
+            else:
+                Par.q = quarantineTrace[t]
         State = newTime(State, Par)
         #, reported, dead
         #allReported.append(reported)
@@ -634,6 +639,22 @@ def cumulate(rki_data):
         AllCumulDead[day, :, :, :] = CumulSumDead
     return AllCumulCase, AllCumulDead,(LKs,Ages,Geschlechter)
 
+def toTrace(x):
+    if isNumber(x):
+        x = tf.zeros(x,CalcFloatStr)
+    return x
+
+def gaussian(x, mu=0.0, sig=1.0):
+    x = toTrace(x)
+    vals = tf.exp(-(x - mu) ** 2. / (2 * (sig** 2.)))
+    vals = vals / tf.reduce_sum(vals) # normalize (numerical !, since the domain is not infinite)
+    return vals
+
+def sigmoid(x, mu=0.0, sig=1.0, offset=0.0):
+    x = toTrace(x)
+    vals = 1. / (1. + tf.exp(-(x - mu)/sig)) + offset
+    vals = vals / tf.reduce_sum(vals) # normalize (numerical !, since the domain is not infinite)
+    return vals
 
 def PrepareFit(Par, Vars):
     allVars = []
@@ -661,11 +682,12 @@ Pop = 1e6*np.array([(3.88+0.78),6.62,2.31+2.59+3.72+15.84, 23.9, 15.49, 7.88], C
 TPop = np.sum(Pop) # total population
 NumTimesQ = [14, Pop.shape[0]] # time spent in quarantine (for general public)
 NumTimes = [16, Pop.shape[0]] # Times spent in hospital
+NumAge =6
 
 I = tf.constant(np.zeros(NumTimes,CalcFloatStr));  # make the time line for infected ppl (dependent on day of desease)
 
 I0Var = tf.Variable(initial_value=1.0, name='I0')
-Infected = I0Var * np.array([1,1,1,1,1,1],CalcFloatStr) # 5 infected of one age group to start with
+Infected = I0Var * np.ones(NumAge,CalcFloatStr) # 5 infected of one age group to start with
 
 I,tmp = advanceQueue(I,Infected / TPop) # start with some infections
 
@@ -678,19 +700,36 @@ initState = newState(S = (Pop-Infected)/TPop, Sq=noQuarant, I=I, Iq=noInfect, Q=
 
 SimTimes=80
 
-ChanceToDie = 0.2 * np.array([0,0,0.1,0.2,0.4,1.0],CalcFloatStr) # Age-dependent chance to die in intensive care
+# model the age distribution of dying
+DangerPoint = NumAge // 2.0,
+DangerSpread = 3.0,
+TotalRateToDie = 0.1,
+ChanceToDie = TotalRateToDie * sigmoid(NumAge, DangerPoint, DangerSpread) # Age-dependent chance to die in intensive care
 
-Par = cPar( q=float(0.0), # quarantined
-            ii=float(0.15/TPop), # chance/day to become infected by an infected person
-            # ii=float(2.88), # chance/day to become infected by an infected person
-            iq=float(0.0000), # chance/day to become infected by a reported quarantened
-            ih=float(0.0000), # chance/day to become infected while visiting the hospital
-            d=float(0.01), # chance/day to detect an infected person
-            h=float(0.01), # chance/day to become ill and go to the hospital (should be desease-day dependent!)
-            hic=float(0.2), # chance to become severely ill needing intensive care
-            r = ChanceToDie, # chance to die at the hospital (should be age and day-dependent)
-            quarantineTrace = deltas([[30,0.3],[50,0.9]],SimTimes) # delta peaks represent a quarantine action (of the government)
-            )
+# model the age distribution of being put into IC
+
+TotalRateICU = 0.2
+ChanceICU = sigmoid(NumAge, DangerPoint, DangerSpread) # Age-dependent chance to die in intensive care
+
+# model the age-dependent change to become ill
+
+TotalRateIll = 0.1
+ChanceHospital = TotalRateIll * sigmoid(NumAge, DangerPoint, DangerSpread) # Age-dependent chance to die in intensive care
+
+# model the infection process in dependence of time
+
+Par = cPar(
+    q=float(0.0), # quarantined. Will be replaced by the quantineTrace information!
+    ii=float(0.15/TPop), # chance/day to become infected by an infected person
+    # ii=float(2.88), # chance/day to become infected by an infected person
+    iq=float(0.0000), # chance/day to become infected by a reported quarantined
+    ih=float(0.0000), # chance/day to become infected while visiting the hospital
+    d=float(0.01), # chance/day to detect an infected person
+    h= ChanceHospital, # chance/day to become ill and go to the hospital (should be desease-day dependent!)
+    hic = ChanceICU, # chance to become severely ill needing intensive care
+    r = ChanceToDie, # chance to die at the hospital (should be age and day-dependent)
+    quarantineTrace = 0.0 # deltas([[30,0.3],[50,0.9]],SimTimes) # delta peaks represent a quarantine action (of the government)
+    )
 
 ToFit = ['ii']
 Par, allVars = PrepareFit(Par,ToFit)
