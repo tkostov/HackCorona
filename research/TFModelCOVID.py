@@ -624,7 +624,7 @@ def getLabels(rki_data,label):
 def cumulate(rki_data):
     # rki_data.keys()  # IdBundesland', 'Bundesland', 'Landkreis', 'Altersgruppe', 'Geschlecht',
     #        'AnzahlFall', 'AnzahlTodesfall', 'ObjectId', 'Meldedatum', 'IdLandkreis'
-    TotalCases = 0;
+    # TotalCases = 0;
     rki_data = rki_data.sort_values('Meldedatum')
     day1 = toDay(np.min(rki_data['Meldedatum']))
     dayLast = toDay(np.max(rki_data['Meldedatum']))
@@ -638,18 +638,21 @@ def cumulate(rki_data):
 
     # CumulMale = np.zeros(dayLast-day1); CumulFemale = np.zeros(dayLast-day1)
     # TMale = 0; TFemale = 0; # TAge = zeros()
+    prevday=-1;
     for index, row in rki_data.iterrows():
         # datetime = pd.to_datetime(row['Meldedatum'], unit='ms').to_pydatetime()
         day = toDay(row['Meldedatum'])-day1 # convert to days with an offset
+        # print(day)
         myLK = LKs.index(row['Landkreis'])
         myAge = Ages.index(row['Altersgruppe'])
         myG = Geschlechter.index(row['Geschlecht'])
         AnzahlFall = row['AnzahlFall']
         AnzahlTodesfall = row['AnzahlTodesfall']
         CumulSumCase[myLK,myAge,myG] += AnzahlFall
-        AllCumulCase[day, :, :, :] = CumulSumCase
+        AllCumulCase[prevday+1:day+1, :, :, :] = CumulSumCase
         CumulSumDead[myLK, myAge, myG] += AnzahlTodesfall
-        AllCumulDead[day, :, :, :] = CumulSumDead
+        AllCumulDead[prevday+1:day+1, :, :, :] = CumulSumDead
+        prevday=day
     return AllCumulCase, AllCumulDead,(LKs,Ages,Geschlechter)
 
 def toTrace(x):
