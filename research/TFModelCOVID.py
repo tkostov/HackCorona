@@ -563,7 +563,7 @@ def measuredStates(allRes, Pop, byAge=False):
         cured = tf.reduce_sum(cured,(-2,-1))
     return reported, hospitalized, dead, cured
 
-def showResults(allRes, showAllStates=False):
+def showSimulation(allRes, showAllStates=False):
     (FinalState, allStatesScalar, allStatesQ1, allStatesQ2) = allRes
     allStatesQ1 = ev(allStatesQ1);
     allStatesQ2 = ev(allStatesQ2);
@@ -592,7 +592,7 @@ def showResults(allRes, showAllStates=False):
     myax=plt.gca(); maxY=myax.get_ylim()[1]
     plt.plot(Par.quarantineTrace * maxY)  # scale the quarantine trace for visualization only
     # plt.gca().set_xlim(myax.get_xlim());
-    plt.gca().set_ylim([-10,maxY]);
+    plt.gca().set_ylim([-0.05,maxY]);
     plt.legend(['infected','reported (x10)','dead (x10)','cured=C+CR','quarantineTrace'])
     plt.xlabel('days');plt.ylabel('fraction')
 
@@ -715,6 +715,7 @@ def showFit(measured, fitcurve, LKs=[0,100,200], indices=None):
 dat = retrieveData()
 Pop = 1e6*np.array([(3.88+0.78),6.62,2.31+2.59+3.72+15.84, 23.9, 15.49, 7.88, 1.0], CalcFloatStr)
 AgeDist = (Pop / np.sum(Pop))
+Pop = [] # should not be used below
 PopTotalLK = dat.groupby(by='IdLandkreis').sum()["Bev Insgesamt"] # .to_dict()  # population of each district
 LKPopulation = (AgeDist * PopTotalLK[:,np.newaxis]).astype(CalcFloatStr)
 # THIS IS WRONG !!!! The total should be 80 Mio but is 243 Moi !!
@@ -724,7 +725,7 @@ TPop = np.sum(LKPopulation) # total population
 NumLK = 393 # dat['IdLandkreis'].unique().shape # number of districts to simulate for (dimension: -3)
 NumTimesQ = [14, NumLK, LKPopulation.shape[-1]] # time spent in quarantine (for general public) in each district
 NumTimes = [16, NumLK, LKPopulation.shape[-1]] # Times spent in hospital in each district
-NumAge = 7 # represents the age groups according to the RKI
+NumAge = LKPopulation.shape[-1] # represents the age groups according to the RKI
 
 # Define the starting population of ill ppl.
 I0 = tf.constant(np.zeros(NumTimes,CalcFloatStr));  # make the time line for infected ppl (dependent on day of desease)
@@ -758,11 +759,11 @@ ChanceICU = sigmoid(NumAge, DangerPoint, DangerSpread) # Age-dependent chance to
 
 # model the age-dependent change to become ill
 
-TotalRateIll = 0.01
-ChanceHospital = TotalRateIll * sigmoid(NumAge, DangerPoint, DangerSpread) # Age-dependent chance to die in intensive care
+TotalRateToHospital = 0.1
+ChanceHospital = TotalRateToHospital * sigmoid(NumAge, DangerPoint, DangerSpread) # Age-dependent chance to die in intensive care
 
 #
-InfectionRateTotal = tf.Variable(initial_value = 0.19, name='ii',dtype=CalcFloatStr) # float(0.15/TPop)
+InfectionRateTotal = tf.Variable(initial_value = 50, name='ii',dtype=CalcFloatStr) # float(0.15/TPop)
 MeanInfectionDate = 5.0
 InfectionSpread = 2.0
 TimeOnly = [NumTimes[0],1,1] # Independent on Age, only on disease progression
@@ -808,6 +809,8 @@ else:
 #     df = dat.groupby(["Meldedatum"]).aggregate(func="sum")[["AnzahlFall"]].reset_index()
 
 reported, hospitalized, cured, dead = measuredStates(allRes,Pop, byAge=True)
+# Lets simulate the initial states.
+showSimulation(allRes)
 
 # AllGermanReported
 # loss = Loss_Poisson2(reported[0:LKReported.shape[0]], LKReported, Bg=0.1)
@@ -821,6 +824,5 @@ showFit(LKReported, fitcurve=res[-1], indices=Indices)
 # relativeAgeGroups = dat.groupby(['Altersgruppe']).aggregate(func="sum")[["AnzahlFall"]]
 # stateSum(FinalState)
 
-showResults(allRes)
 1+1
 # with sess.as_default():
