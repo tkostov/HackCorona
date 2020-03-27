@@ -109,7 +109,7 @@ else:
 
 reported, hospitalized, cured, dead = covid.measuredStates(allRes, LKPopulation, byAge=True)
 # Lets simulate the initial states.
-covid.showSimulation(allRes)
+covid.showSimulation(allRes, Par)
 
 # AllGermanReported
 # loss = Loss_Poisson2(reported[0:LKReported.shape[0]], LKReported, Bg=0.1)

@@ -563,7 +563,7 @@ def measuredStates(allRes, Pop, byAge=False):
         cured = tf.reduce_sum(cured,(-2,-1))
     return reported, hospitalized, dead, cured
 
-def showSimulation(allRes, showAllStates=False):
+def showSimulation(allRes, Par, showAllStates=False):
     (FinalState, allStatesScalar, allStatesQ1, allStatesQ2) = allRes
     allStatesQ1 = ev(allStatesQ1);
     allStatesQ2 = ev(allStatesQ2);
@@ -816,7 +816,7 @@ if __name__ == '__main__':
 
     reported, hospitalized, cured, dead = measuredStates(allRes, LKPopulation, byAge=True)
     # Lets simulate the initial states.
-    showSimulation(allRes)
+    showSimulation(allRes, Par)
 
     # AllGermanReported
     # loss = Loss_Poisson2(reported[0:LKReported.shape[0]], LKReported, Bg=0.1)
