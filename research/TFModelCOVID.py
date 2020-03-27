@@ -231,10 +231,16 @@ def iscomplex(mytype):
 def isNumber(val):
     return isinstance(val,numbers.Number)
 
+def isList(val):
+    return isinstance(val,list)
+
+def isTuple(val):
+    return isinstance(val,tuple)
+
 def totensor(img):
     if istensor(img):
         return img
-    if (not isinstance(img,numbers.Number)) and ((img.dtype==defaultTFDataType) or (img.dtype==defaultTFCpxDataType)):
+    if not isNumber(img) and ((img.dtype==defaultTFDataType) or (img.dtype==defaultTFCpxDataType)):
         img=tf.constant(img)
     else:
         if iscomplex(img):
@@ -640,18 +646,20 @@ def cumulate(rki_data):
     return AllCumulCase, AllCumulDead,(LKs,Ages,Geschlechter)
 
 def toTrace(x):
-    if isNumber(x):
+    if isNumber(x) or isTuple(x) or isList(x):
         x = tf.zeros(x,CalcFloatStr)
+    else:
+        x = totensor(x)
     return x
 
 def gaussian(x, mu=0.0, sig=1.0):
-    x = toTrace(x)
+    x = toTrace(x); mu = totensor(mu); sig=totensor(sig)
     vals = tf.exp(-(x - mu) ** 2. / (2 * (sig** 2.)))
     vals = vals / tf.reduce_sum(vals) # normalize (numerical !, since the domain is not infinite)
     return vals
 
 def sigmoid(x, mu=0.0, sig=1.0, offset=0.0):
-    x = toTrace(x)
+    x = toTrace(x);mu = totensor(mu); sig=totensor(sig)
     vals = 1. / (1. + tf.exp(-(x - mu)/sig)) + offset
     vals = vals / tf.reduce_sum(vals) # normalize (numerical !, since the domain is not infinite)
     return vals
@@ -701,9 +709,9 @@ initState = newState(S = (Pop-Infected)/TPop, Sq=noQuarant, I=I, Iq=noInfect, Q=
 SimTimes=80
 
 # model the age distribution of dying
-DangerPoint = NumAge // 2.0,
-DangerSpread = 3.0,
-TotalRateToDie = 0.1,
+DangerPoint = NumAge // 2.0
+DangerSpread = 3.0
+TotalRateToDie = 0.1
 ChanceToDie = TotalRateToDie * sigmoid(NumAge, DangerPoint, DangerSpread) # Age-dependent chance to die in intensive care
 
 # model the age distribution of being put into IC
@@ -716,11 +724,18 @@ ChanceICU = sigmoid(NumAge, DangerPoint, DangerSpread) # Age-dependent chance to
 TotalRateIll = 0.1
 ChanceHospital = TotalRateIll * sigmoid(NumAge, DangerPoint, DangerSpread) # Age-dependent chance to die in intensive care
 
+#
+InfectionRateTotal = tf.Variable(initial_value=float(0.15/TPop), name='ii')
+MeanInfectionDate = 5.0
+InfectionSpread = 2.0
+TimeOnly = [NumTimes[-2],1] # Independent on Age, only on desease progression
+ChanceInfection = InfectionRateTotal * gaussian(TimeOnly, MeanInfectionDate, InfectionSpread) # Age-dependent chance to die in intensive care
+
 # model the infection process in dependence of time
 
 Par = cPar(
     q=float(0.0), # quarantined. Will be replaced by the quantineTrace information!
-    ii=float(0.15/TPop), # chance/day to become infected by an infected person
+    ii=ChanceInfection, # chance/day to become infected by an infected person
     # ii=float(2.88), # chance/day to become infected by an infected person
     iq=float(0.0000), # chance/day to become infected by a reported quarantined
     ih=float(0.0000), # chance/day to become infected while visiting the hospital
