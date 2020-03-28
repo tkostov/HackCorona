@@ -107,6 +107,55 @@ def get_ch_infections():
     return dumps(json_data), 200
 
 
+@app.route("/it_infections")
+def get_it_infections():
+    client = MongoClient(f'mongodb://{os.getenv("USR_")}:{os.getenv("PWD_")}@{os.getenv("REMOTE_HOST")}:{os.getenv("REMOTE_PORT")}/{os.getenv("AUTH_DB")}')
+    db = client[os.getenv("MAIN_DB")]
+    lk_aggregated_collection = db["it_data"]
+    json_data = {"fields": [{"name": "density", "format": "", "type": "integer"},
+                            {"name": "latitude", "format": "", "type": "real"},
+                            {"name": "longitude", "format": "", "type": "real"},
+                            {"name": "day", "format": "YYYY-M-D H:m:s", "type": "timestamp"}]}
+    rows_data = []
+    backend_data = list(lk_aggregated_collection.find())
+    for x in backend_data:
+        rows_data.append([x["cases"], x["lat"], x["long"], datetime.datetime.strptime(x["data"].replace("T", " "), '%Y-%m-%d %H:%M:%S').strftime("%Y-%m-%d %H:%M:%S")])
+    json_data["rows"] = rows_data
+    return dumps(json_data), 200
+
+
+@app.route("/infections")
+def get_infections():
+    client = MongoClient(f'mongodb://{os.getenv("USR_")}:{os.getenv("PWD_")}@{os.getenv("REMOTE_HOST")}:{os.getenv("REMOTE_PORT")}/{os.getenv("AUTH_DB")}')
+    db = client[os.getenv("MAIN_DB")]
+    it_collection = db["it_data"]
+    ch_collection = db["ch_data"]
+    json_data = {"fields": [{"name": "density", "format": "", "type": "integer"},
+                            {"name": "latitude", "format": "", "type": "real"},
+                            {"name": "longitude", "format": "", "type": "real"},
+                            {"name": "day", "format": "YYYY-M-D H:m:s", "type": "timestamp"}]}
+    rows_data = []
+    backend_data = list(it_collection.find())
+    for x in backend_data:
+        rows_data.append([x["cases"], x["lat"], x["long"],
+                          datetime.datetime.strptime(x["data"].replace("T", " "), '%Y-%m-%d %H:%M:%S').strftime(
+                              "%Y-%m-%d %H:%M:%S")])
+    backend_data = list(ch_collection.find())
+    for x in backend_data:
+        rows_data.append([x["cases"], x["geo_coordinates_2d"][0], x["geo_coordinates_2d"][1],
+                          datetime.datetime.strptime(x["date"], '%Y-%m-%d').strftime("%Y-%m-%d %H:%M:%S")])
+
+    lk_aggregated_collection = db["lk_aggregated"]
+    backend_data = list(lk_aggregated_collection.find())
+    for x in backend_data:
+        rows_data.append([x["AnzahlFall"], x["geo_point_2d"][0], x["geo_point_2d"][1],
+                          (datetime.datetime.now() + datetime.timedelta(days=x["TageInZukunft"])).strftime(
+                              "%Y-%m-%d %H:%M:%S")])
+
+    json_data["rows"] = rows_data
+    return dumps(json_data), 200
+
+
 @app.route("/lk_infections")
 def get_lk_aggregated_infections():
     """
