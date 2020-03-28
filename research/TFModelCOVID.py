@@ -389,7 +389,7 @@ class cPar:
         # self.qq = totensor(qq) # 2nd order rate of quarantined S by other quarantined (co-habitant).
         self.d = totensor(d) # probability of an infection being detected and quarantined
         self.h = totensor(h) # probability of an infected (reported or not) becoming ill and hospitalized
-        self.hic = totensor(h) # probability of a hospitalized person becoming severely ill needing an ICU
+        self.hic = totensor(hic) # probability of a hospitalized person becoming severely ill needing an ICU
         self.r = totensor(r) # probability of a severely ill person to die
         # self.c = tf.constant(c) # probability of a hospitalized person (after N days) being cured
         self.NQ = totensor(NQ) # number of days for quarantine
@@ -453,7 +453,10 @@ def stateSum(State):
     return mySum
 
 def ev(avar):
-    val=avar.eval(session=sess)
+    if istensor(avar):
+        val=avar.eval(session=sess)
+    else:
+        val=avar
     return val
 
 def newTime(State, Par):
@@ -462,7 +465,7 @@ def newTime(State, Par):
     """
     # first determid the various transfer rates (e.g. also stuff to put into the queues)
     # not in the line below, that all infected ppl matter, no matter which age group. The sum results in a scalar!
-    infections = State.S * tf.reduce_sum(State.I * Par.ii + State.Q * Par.iq + State.H * Par.ih,[0,2],keepdims=True);
+    infections = (State.S * tf.reduce_sum(State.I * Par.ii + State.Q * Par.iq + State.H * Par.ih,[0,2],keepdims=True));
     # infectionsCountry = State.S * tf.reduce_sum(State.I * Par.ii + State.Q * Par.iq + State.H * Par.ih);
     # TotalQuarantined = getTotalQueue(State.Sq)# exclude the last bin from the chance of infection (to warrant total number)
     # infectionsQ = State.I * TotalQuarantined * Par.qi + TotalQuarantined * TotalQuarantined * Par.qq
@@ -471,10 +474,11 @@ def newTime(State, Par):
     # quarantined ppl getting infected during quarantine are neglected for now!
     # now lets calculate and apply the transfers between queues
     I,Q = transferQueue(State.I, State.Q, Par.d) # infected ppl. get detected by the system
-    I,Iq = transferQueue(State.I, State.Iq, Par.q) # quarantine of infected ppl. They will leave either by making it to the end of infection (cured) or being detected
+    I,Iq = transferQueue(I, State.Iq, Par.q) # quarantine of infected ppl. They will leave either by making it to the end of infection (cured) or being detected
     # The line below is not quite correct, as the hospitalization rate is slightly lowered by line above!
     I,H = transferQueue(I, State.H, Par.h) # infected and hospitalized ppl. get detected by the system
     Iq,H = transferQueue(Iq, H, Par.h) # hospitalization of quarantined infected ppl.
+    Iq,Q = transferQueue(Iq, Q, Par.d) # hospitalization of quarantined infected ppl.
     H,HIC = transferQueue(H, State.HIC, Par.hic) # infected and hospitalized ppl. get detected by the system
     HIC,deaths = removeFromQueue(HIC, Par.r)  # deaths
     # now the time-dependent actions: advancing the queues and dequiing
@@ -483,12 +487,12 @@ def newTime(State, Par):
     I, curedI = advanceQueue(I, infections)
     Q, curedQ = advanceQueue(Q, 0)
     HIC, backToHospital = advanceQueue(HIC, 0)  # surviving hospital or
-    H, curedH = advanceQueue(H + backToHospital, 0) # surviving intensive care
+    H, curedH = advanceQueue(H, backToHospital) # surviving intensive care
     # finally work the dequeued into the states
-    C = tf.squeeze(State.C + curedI + Idequarantined)  # the quarantined infected are considered "cured" if they reached the end of infection, even if still in quarantine
-    CR = tf.squeeze(State.CR + curedQ + curedH)  # reported cured
-    S = tf.squeeze(State.S - infections  + dequarantined - Squarantined)   # - infectionsQ
-    D = tf.squeeze(State.D + deaths)
+    C = State.C + curedI + Idequarantined  # the quarantined infected are considered "cured" if they reached the end of infection, even if still in quarantine
+    CR = State.CR + curedQ + curedH  # reported cured
+    S = State.S - tf.squeeze(infections)  + dequarantined - Squarantined   # - infectionsQ
+    D = State.D + deaths
     # reportedInfections = tf.reduce_sum(I) + tf.reduce_sum(Q) + tf.reduce_sum(H) # all infected reported
 
     State = cState(S,Sq,I,Iq,Q,H,HIC,C,CR,D)
@@ -551,7 +555,7 @@ def measuredStates(allRes, Pop, byAge=False):
     # S = Scal[:, 0]; C = Scal[:, 1];
     CR = Scal[:, 2]; D = Scal[:, 3]
 
-    reported = tf.reduce_sum(Q + H + HIC,1)
+    reported = tf.reduce_sum(Q + H + HIC + CR + D,1)   #
     hospitalized = tf.reduce_sum(H + HIC,1)
     dead = D
     cured = CR #  not C, since these are not reported
@@ -563,38 +567,61 @@ def measuredStates(allRes, Pop, byAge=False):
         cured = tf.reduce_sum(cured,(-2,-1))
     return reported, hospitalized, dead, cured
 
-def showSimulation(allRes, Par, showAllStates=False):
+def plot2Ax(data, AxScale, AxLabels=["days","fraction","population"], mylegend=None, title=None):
+    fig, ax1 = plt.subplots()
+    plt.title(title)
+    # fig = plt.figure
+    ax1.plot(data)
+    # ax1 = plt.gca()
+    ax1.set_xlabel(AxLabels[0])
+    ax1.set_ylabel(AxLabels[1])
+    ax1.tick_params(axis='y')
+    if mylegend is not None:
+        plt.legend(mylegend)
+
+    if AxScale is not None:
+        ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+        # ax2.plot(data*AxScale)
+        rng = ax1.get_ylim()
+        ax2.set_ylim([rng[0]*AxScale,rng[1]*AxScale])
+        ax2.tick_params(axis='y')
+        ax2.set_ylabel(AxLabels[2])  # we already handled the x-label with ax1
+        fig.tight_layout()  # otherwise the right y-label is slightly clipped
+    plt.show()
+
+def showStates(allRes, Par, showAllStates=False, name="States", noS=False, Population=None):
     (FinalState, allStatesScalar, allStatesQ1, allStatesQ2) = allRes
     allStatesQ1 = ev(allStatesQ1);
     allStatesQ2 = ev(allStatesQ2);
     Scal = ev(allStatesScalar);
 
-    I = np.sum(np.squeeze(allStatesQ1[:, 0]), (-3,-2,-1))
-    Iq = np.sum(np.squeeze(allStatesQ1[:, 1]), (-3,-2,-1))
-    Q = np.sum(np.squeeze(allStatesQ1[:, 2]), (-3,-2,-1))
-    H = np.sum(np.squeeze(allStatesQ1[:, 3]), (-3,-2,-1))
-    HIC = np.sum(np.squeeze(allStatesQ1[:, 4]), (-3,-2,-1))
-    Sq = np.sum(np.squeeze(allStatesQ2), (-3,-2,-1))
+    I = np.sum(allStatesQ1[:, 0], (-3,-2,-1))
+    Iq = np.sum(allStatesQ1[:, 1], (-3,-2,-1))
+    Q = np.sum(allStatesQ1[:, 2], (-3,-2,-1))
+    H = np.sum(allStatesQ1[:, 3], (-3,-2,-1))
+    HIC = np.sum(allStatesQ1[:, 4], (-3,-2,-1))
+    Sq = np.sum(allStatesQ2, (-3,-2,-1))
 
     S = np.sum(Scal[:, 0],(-2,-1));C = np.sum(Scal[:, 1],(-2,-1));
     CR = np.sum(Scal[:, 2],(-2,-1));D = np.sum(Scal[:, 3],(-2,-1))
 
-    toPlot = np.transpose(np.stack([S, C*10, CR*10, D*10, I*10, Iq*10, Q*10, H*10, HIC*10, Sq]))
-    plt.figure('States');
-    plt.plot(toPlot);
-    plt.legend(['S', 'C (x10)', 'CR (x10)', 'D (x10)', 'I (x10)', 'Iq (x10)', 'Q (x10)', 'H (x10)', 'HIC (x10)', 'Sq'])
-    plt.xlabel('days');plt.ylabel('fraction')
+    # plt.figure(name);
+    if noS:
+        toPlot = np.transpose(np.stack([C, CR, D, I, Iq, Q, H, HIC, Sq]))
+        mylegend = ['C ', 'CR ', 'D ', 'I ', 'Iq ', 'Q ', 'H ', 'HIC ', 'Sq']
+    else:
+        toPlot = np.transpose(np.stack([S, C * 10, CR * 10, D * 10, I * 10, Iq * 10, Q * 10, H * 10, HIC * 10, Sq]))
+        mylegend = ['S', 'C (x10)', 'CR (x10)', 'D (x10)', 'I (x10)', 'Iq (x10)', 'Q (x10)', 'H (x10)', 'HIC (x10)', 'Sq']
+    plot2Ax(toPlot, Population, ['days','fraction','Population'], mylegend, title=name);
 
-    plt.figure('Infected, Reported, Dead');
-    allReported = Q + H + HIC  # + C + D # all infected reported
-    plt.plot(I); plt.plot(10*allReported)
-    plt.plot(D*10); plt.plot((C+CR));
-    myax=plt.gca(); maxY=myax.get_ylim()[1]
-    plt.plot(Par.quarantineTrace * maxY)  # scale the quarantine trace for visualization only
+    # plt.figure('Infected, Reported, Dead');
+    allReported = Q + H + HIC + CR + D # + C + D # all infected reported
+    toPlot = np.transpose(np.stack([I, allReported, D, C+CR, Par.quarantineTrace*np.ones(C.shape)]))
+    mylegend=['infected','reported (x10)','dead (x10)','cured=C+CR','quarantineTrace']
+    plot2Ax(toPlot, Population, ['days','fraction','Population'], mylegend, title=name);
+
     # plt.gca().set_xlim(myax.get_xlim());
-    plt.gca().set_ylim([-0.05,maxY]);
-    plt.legend(['infected','reported (x10)','dead (x10)','cured=C+CR','quarantineTrace'])
-    plt.xlabel('days');plt.ylabel('fraction')
+    # plt.gca().set_ylim([-0.05,maxY]);
 
     if showAllStates:
         plt.figure('I');
@@ -617,8 +644,11 @@ def toDay(timeInMs):
     return int(timeInMs / (1000*60*60*24))
 
 def getLabels(rki_data,label):
-    labels = rki_data[label].unique()
-    labels.sort(); labels = labels.tolist()
+    try:
+        labels = rki_data[label].unique()
+        labels.sort(); labels = labels.tolist()
+    except KeyError:
+        labels = ['BRD']
     return labels
 
 def cumulate(rki_data):
@@ -657,7 +687,10 @@ def cumulate(rki_data):
 
 def toTrace(x):
     if isNumber(x) or isTuple(x) or isList(x):
-        x = tf.zeros(x,CalcFloatStr)
+        aramp = tf.constant(np.arange(np.max(x)), dtype=CalcFloatStr)
+        if isNumber(x):
+            x = [x]
+        x = tf.reshape(aramp,x)  # if you get an error here, the size is not 1D!
     else:
         x = totensor(x)
     return x
@@ -693,7 +726,11 @@ def showFit(measured, fitcurve, LKs=[0,100,200], indices=None):
     plt.figure('Measured, Fitted');
     lg = ['all Germany meas','fit']
     total = np.sum(measured,(1,2))
-    totalFit = np.sum(fitcurve,(1,2))
+    if fitcurve.ndim > 2:
+        totalFit = np.sum(fitcurve,(1,2))
+    else:
+        totalFit = np.sum(fitcurve, (1))
+        LKs=[]
     color = next(plt.gca()._get_lines.prop_cycler)['color']
     plt.plot(total,'o',color=color);
     plt.plot(totalFit,color=color)
@@ -711,124 +748,12 @@ def showFit(measured, fitcurve, LKs=[0,100,200], indices=None):
     plt.legend(lg)
     plt.xlabel('days');plt.ylabel('population')
 
-if __name__ == '__main__':
+def plotAgeGroups(res1,res2):
+    plt.figure()
+    plt.plot(res1)
+    plt.gca().set_prop_cycle(None)
+    plt.plot(res2,'--')
 
-    # TPop = 82790000
-    # Age structure from:
-    # https://de.statista.com/statistik/daten/studie/1365/umfrage/bevoelkerung-deutschlands-nach-altersgruppen/
-    # crude approximation by moving some numbers around...:
-    dat = retrieveData()
-    Pop = 1e6*np.array([(3.88+0.78),6.62,2.31+2.59+3.72+15.84, 23.9, 15.49, 7.88, 1.0], CalcFloatStr)
-    AgeDist = (Pop / np.sum(Pop))
 
-    # Pop = [] # should not be used below
-    PopTotalLK = dat.groupby(by='IdLandkreis').sum()["Bev Insgesamt"] # .to_dict()  # population of each district
-    LKPopulation = (AgeDist * PopTotalLK[:,np.newaxis]).astype(CalcFloatStr)
-    # THIS IS WRONG !!!! The total should be 80 Mio but is 243 Moi !!
-    LKPopulation *= 82790000 / np.sum(LKPopulation)
+# if __name__ == '__main__':
 
-    TPop = np.sum(LKPopulation) # total population
-    NumLK = 393 # dat['IdLandkreis'].unique().shape # number of districts to simulate for (dimension: -3)
-    NumTimesQ = [14, NumLK, LKPopulation.shape[-1]] # time spent in quarantine (for general public) in each district
-    NumTimes = [16, NumLK, LKPopulation.shape[-1]] # Times spent in hospital in each district
-    NumAge = LKPopulation.shape[-1] # represents the age groups according to the RKI
-
-    # Define the starting population of ill ppl.
-    I0 = tf.constant(np.zeros(NumTimes,CalcFloatStr));  # make the time line for infected ppl (dependent on day of desease)
-    I0Var = tf.Variable(initial_value=LKPopulation*0.0+10.0, name='I0Var')  # start with one in every age group and district
-    Infected = I0Var # 10 infected of one age group to start with
-    I0, tmp = advanceQueue(I0,Infected / TPop) # start with some infections
-
-    S0 = (LKPopulation-Infected)/TPop; #  no time line here!
-
-    noQuarant = np.zeros(NumTimesQ,CalcFloatStr)
-    noInfect = np.zeros(NumTimes,CalcFloatStr)
-    noScalar = np.zeros(NumTimes[1:],CalcFloatStr)
-
-    initState = newState(S = S0, Sq=noQuarant, I=I0, Iq=noInfect, Q=noInfect,
-                         H=noInfect, HIC=noInfect, C=noScalar, CR=noScalar, D=noScalar) # Population
-
-    # stateSum(initState)
-
-    SimTimes=80
-
-    # model the age distribution of dying
-    DangerPoint = NumAge // 2.0
-    DangerSpread = 3.0
-    TotalRateToDie = 0.1
-    ChanceToDie = TotalRateToDie * sigmoid(NumAge, DangerPoint, DangerSpread) # Age-dependent chance to die in intensive care
-
-    # model the age distribution of being put into IC
-
-    TotalRateICU = 0.01
-    ChanceICU = sigmoid(NumAge, DangerPoint, DangerSpread) # Age-dependent chance to die in intensive care
-
-    # model the age-dependent change to become ill
-
-    TotalRateToHospital = 0.1
-    ChanceHospital = TotalRateToHospital * sigmoid(NumAge, DangerPoint, DangerSpread) # Age-dependent chance to die in intensive care
-
-    #
-    InfectionRateTotal = tf.Variable(initial_value = 50, name='ii',dtype=CalcFloatStr) # float(0.15/TPop)
-    MeanInfectionDate = 5.0
-    InfectionSpread = 2.0
-    TimeOnly = [NumTimes[0],1,1] # Independent on Age, only on disease progression
-    ChanceInfection = InfectionRateTotal * gaussian(TimeOnly, MeanInfectionDate, InfectionSpread) # Age-dependent chance to die in intensive care
-
-    # model the infection process in dependence of time
-
-    Par = cPar(
-        q=float(0.0), # quarantined. Will be replaced by the quantineTrace information!
-        ii = ChanceInfection, # chance/day to become infected by an infected person
-        # ii=float(2.88), # chance/day to become infected by an infected person
-        iq=float(0.0000), # chance/day to become infected by a reported quarantined
-        ih=float(0.0000), # chance/day to become infected while visiting the hospital
-        d=float(0.01), # chance/day to detect an infected person
-        h= ChanceHospital, # chance/day to become ill and go to the hospital (should be desease-day dependent!)
-        hic = ChanceICU, # chance to become severely ill needing intensive care
-        r = ChanceToDie, # chance to die at the hospital (should be age and day-dependent)
-        quarantineTrace = deltas([[30,0.3],[50,0.9]],SimTimes) # delta peaks represent a quarantine action (of the government)
-        )
-
-    ToFit = [] #'ii' see above
-    Par, allVars = PrepareFit(Par,ToFit)
-    allVars = allVars + [I0Var, InfectionRateTotal]
-
-    allRes = buildStateModel(initState, Par, SimTimes)
-    (FinalState, allStatesScalar, allStatesQ1, allStatesQ2) = allRes
-
-    if True:
-        LKReported, AllCumulDead, Indices = cumulate(dat)
-        if True: # no sex information
-            LKReported = np.sum(LKReported,(-1))
-            AllCumulDead = np.sum(AllCumulDead,(-1))
-        AllGermanReported = np.sum(LKReported,(1,2))
-    else:
-        dat["Meldedatum"] = pd.to_datetime(dat["Meldedatum"], unit="ms")
-        qq = dat.groupby(["Meldedatum"]).aggregate(func="sum")[["AnzahlFall"]].reset_index()
-        dat["CumSum"] = np.cumsum(qq['AnzahlFall'])
-        Daten = qq["Meldedatum"]
-        AllGermanReported = np.cumsum(qq['AnzahlFall'])
-
-    # df, population = load_data()  # not needed for now
-
-    #     df = dat.groupby(["Meldedatum"]).aggregate(func="sum")[["AnzahlFall"]].reset_index()
-
-    reported, hospitalized, cured, dead = measuredStates(allRes, LKPopulation, byAge=True)
-    # Lets simulate the initial states.
-    showSimulation(allRes, Par)
-
-    # AllGermanReported
-    # loss = Loss_Poisson2(reported[0:LKReported.shape[0]], LKReported, Bg=0.1)
-    loss = Loss_FixedGaussian(reported[0:LKReported.shape[0]], LKReported)
-    opt = optimizer(loss, otype="L-BFGS-B", NIter=100)
-    # opt = optimizer(loss, otype="adam", oparam={"learning_rate": 0.3}, NIter=100)
-    res = Optimize(opt, loss=loss, resVars=allVars + [reported])
-
-    showFit(LKReported, fitcurve=res[-1], indices=Indices)
-
-    # relativeAgeGroups = dat.groupby(['Altersgruppe']).aggregate(func="sum")[["AnzahlFall"]]
-    # stateSum(FinalState)
-
-    1+1
-    # with sess.as_default():
