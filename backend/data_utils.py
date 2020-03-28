@@ -107,5 +107,14 @@ def load_geolocation_data():
     data["cca_2"] = pd.to_numeric(data["cca_2"])
     return data
 
+
+def read_hopkins_data(base_path="../Johns-Hopkins-Data/csse_covid_19_data/csse_covid_19_daily_reports"):
+    file_names = [x for x in os.listdir(base_path) if not x.startswith(".")]
+    for file_name in file_names:
+        df = pd.read_csv(os.path.join(base_path, file_name))
+        date = file_name.split(".")[0]
+
+    return data
+
 if __name__ == "__main__":
-    nums = get_absolute_and_relative_covid19_occurance()
+    nums = read_hopkins_data()
