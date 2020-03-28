@@ -1,31 +1,27 @@
-## ----prelims,include=FALSE,cache=FALSE-----------------------------------
-options(
-  keep.source=TRUE,
-  stringsAsFactors=FALSE,
-  encoding="UTF-8"
-)
+estimator.init <- function(){
+  options(
+    keep.source=TRUE,
+    stringsAsFactors=FALSE,
+    encoding="UTF-8"
+  )
+  set.seed(594709947L)
+  library(tidyverse)
+  theme_set(theme_bw())
+  library(pomp)
+  stopifnot(packageVersion("pomp")>="2.1")
+  library(tidyverse)
+}
 
-set.seed(594709947L)
-library(tidyverse)
-theme_set(theme_bw())
-library(pomp)
-stopifnot(packageVersion("pomp")>="2.1")
 
-## ----get-data,include=FALSE----------------------------------------------
-read_csv("https://kingaa.github.io/sbied/ebola/ebola_data.csv") -> dat
 
-dat
-
-## ----popsizes,include=FALSE----------------------------------------------
-populations <- c(Guinea=10628972,Liberia=4092310,SierraLeone=6190280)
-
-## ----plot-data,echo=FALSE------------------------------------------------
-dat %>%
-  ggplot(aes(x=date,y=cases,group=country,color=country))+
-  geom_line()
+estimator.fit <-function(dat, model_id_str, population){
+  # TODO Add the fit procedure here
+  # dat columns are : | day_id | model_str_id | reported cases |
+  estimator.population <- c(population = population)
+}
 
 ## ----rproc,include=FALSE-------------------------------------------------
-rSim <- Csnippet("
+estimator.rSim <- Csnippet("
   double lambda, beta;
   double *E = &E1;
   beta = R0 * gamma; // Transmission rate
@@ -55,7 +51,7 @@ rSim <- Csnippet("
   N_IR += transI; // No of transitions from I to R
 ")
 
-rInit <- Csnippet("
+estimator.rInit <- Csnippet("
   double m = N/(S_0+E_0+I_0+R_0);
   double *E = &E1;
   int j;
@@ -68,7 +64,7 @@ rInit <- Csnippet("
 ")
 
 ## ----skel,include=FALSE--------------------------------------------------
-skel <- Csnippet("
+estimator.skel <- Csnippet("
   double lambda, beta;
   const double *E = &E1;
   double *DE = &DE1;
@@ -87,8 +83,9 @@ skel <- Csnippet("
   DN_IR = gamma * I;
 ")
 
+
 ## ----measmodel,include=FALSE---------------------------------------------
-dObs <- Csnippet("
+estimator.dObs <- Csnippet("
   double f;
   if (k > 0.0)
     f = dnbinom_mu(nearbyint(cases),1.0/k,rho*N_EI,1);
@@ -97,72 +94,90 @@ dObs <- Csnippet("
   lik = (give_log) ? f : exp(f);
 ")
 
-rObs <- Csnippet("
+estimator.rObs <- Csnippet("
   if (k > 0) {
     cases = rnbinom_mu(1.0/k,rho*N_EI);
   } else {
     cases = rpois(rho*N_EI);
   }")
 
-## ----pomp-construction,include=FALSE-------------------------------------
-ebolaModel <- function (country=c("Guinea", "SierraLeone", "Liberia"),
-                        timestep = 0.1, nstageE = 3) {
-  
-  ctry <- match.arg(country)
-  pop <- unname(populations[ctry])
-  nstageE <- as.integer(nstageE)
-  
-  globs <- paste0("static int nstageE = ",nstageE,";")
-  
-  dat <- subset(dat,country==ctry,select=-country)
-  
-  ## Create the pomp object
-  dat %>%
-    select(week,cases) %>%
-    pomp(
-      times="week",
-      t0=min(dat$week)-1,
-      globals=globs,
-      accumvars=c("N_EI","N_IR"),
-      statenames=c("S",sprintf("E%1d",seq_len(nstageE)),
-                   "I","R","N_EI","N_IR"),
-      paramnames=c("N","R0","alpha","gamma","rho","k",
-                   "S_0","E_0","I_0","R_0"),
-      dmeasure=dObs, rmeasure=rObs,
-      rprocess=discrete_time(step.fun=rSim, delta.t=timestep),
-      skeleton=vectorfield(skel),
-      partrans=parameter_trans(
-        log=c("R0","k"),logit="rho",
-        barycentric=c("S_0","E_0","I_0","R_0")),
-      rinit=rInit
-    ) -> po
+estimator.forecast <- function(n_days_ahead, model_id_str){
+  #TODO add code here
 }
 
-ebolaModel("Guinea") -> gin
-ebolaModel("SierraLeone") -> sle
-ebolaModel("Liberia") -> lbr
+estimator.second_init(){
+  ## ----pomp-construction,include=FALSE-------------------------------------
+  self.covidModel <- function (country=c("Guinea"),
+                               timestep = 0.1, nstageE = 3) {
+    
+    ctry <- match.arg(country)
+    pop <- unname(populations[ctry])
+    nstageE <- as.integer(nstageE)
+    
+    globs <- paste0("static int nstageE = ",nstageE,";")
+    
+    dat <- subset(dat,country==ctry,select=-country)
+    
+    ## Create the pomp object
+    dat %>%
+      select(week,cases) %>%
+      pomp(
+        times="week",
+        t0=min(dat$week)-1,
+        globals=globs,
+        accumvars=c("N_EI","N_IR"),
+        statenames=c("S",sprintf("E%1d",seq_len(nstageE)),
+                     "I","R","N_EI","N_IR"),
+        paramnames=c("N","R0","alpha","gamma","rho","k",
+                     "S_0","E_0","I_0","R_0"),
+        dmeasure=dObs, rmeasure=rObs,
+        rprocess=discrete_time(step.fun=rSim, delta.t=timestep),
+        skeleton=vectorfield(skel),
+        partrans=parameter_trans(
+          log=c("R0","k"),logit="rho",
+          barycentric=c("S_0","E_0","I_0","R_0")),
+        rinit=rInit
+      ) -> po
+  }
+  
+  ebolaModel("Guinea") -> gin
+}
+
+estimator.init()
+
+
+
+
+
+## ----get-data,include=FALSE----------------------------------------------
+#read_csv("https://kingaa.github.io/sbied/ebola/ebola_data.csv") -> dat
+
+dat
+dat = dat[dat$country == 'Guinea',]
+## ----popsizes,include=FALSE----------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+# ebolaModel("SierraLeone") -> sle
+# ebolaModel("Liberia") -> lbr
 
 ## ----load-profile,echo=FALSE---------------------------------------------
 options(stringsAsFactors=FALSE)
 read_csv("https://kingaa.github.io/sbied/ebola/ebola-profiles.csv") -> profs
 
 ## ----profiles-plots,results='hide',echo=FALSE----------------------------
-library(tidyverse)
+
 theme_set(theme_bw())
 
-profs %>%
-  gather(variable,value,-profile,-country,-loglik) %>%
-  filter(variable==profile) %>%
-  group_by(country) %>%
-  mutate(dll=loglik-max(loglik)) %>%
-  group_by(country,profile,value) %>%
-  filter(loglik==max(loglik)) %>%
-  ungroup() %>%
-  ggplot(aes(x=value,y=dll))+
-  geom_point(color='red')+
-  geom_hline(yintercept=-0.5*qchisq(p=0.99,df=1))+
-  facet_grid(country~profile,scales='free')+
-  labs(y=expression(l))
+
 
 ## ----diagnostics1,echo=FALSE---------------------------------------------
 library(pomp)
