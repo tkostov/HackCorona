@@ -1,0 +1,39 @@
+{
+  "name": "building-a-geospatial-app",
+  "version": "0.0.1",
+  "scripts": {
+    "start": "webpack-dev-server --progress --hot --open"
+  },
+  "dependencies": {
+    "deck.gl": "^6.2.4",
+    "luma.gl": "^6.2.0",
+    "react": "^16.6.1",
+    "react-dom": "^16.6.1",
+    "react-map-gl": "^4.0.0",
+    "react-vis": "^1.11.4",
+    "swr": "^0.1.18"
+
+  },
+  "babel": {
+    "presets": [
+      "babel-preset-env",
+      "babel-preset-react",
+      "babel-preset-stage-2"
+    ],
+    "plugins": [
+      "babel-plugin-transform-class-properties"
+    ]
+  },
+  "devDependencies": {
+    "babel-core": "^6.7.7",
+    "babel-loader": "^6.2.10",
+    "babel-plugin-inline-json-import": "^0.2.1",
+    "babel-plugin-transform-class-properties": "6.24.1",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-react": "^6.3.13",
+    "babel-preset-stage-2": "^6.24.1",
+    "offline-plugin": "^5.0.5",
+    "webpack": "^2.4.0",
+    "webpack-dev-server": "^2.4.0"
+  }
+}
