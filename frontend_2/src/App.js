@@ -59,8 +59,8 @@ function Map() {
                             ],
                             "type": "timeRange",
                             "value": [
-                                1584837083000,
-                                1585340396000
+                                Date.now()-2*86400000,
+                                Date.now()-86400000
                             ],
                             "enlarged": true,
                             "plotType": "histogram",
@@ -99,7 +99,11 @@ function Map() {
                                             "#FFC300"
                                         ]
                                     },
-                                    "radius": 99.6
+                                    "radius": 99.6,
+                                    "field": {
+                                        "name": "density",
+                                        "type": "integer"
+                                    }
                                 },
                                 "textLabel": [
                                     {
@@ -120,7 +124,10 @@ function Map() {
                                 ]
                             },
                             "visualChannels": {
-                                "weightField": null,
+                                "weightField": {
+                                    "name": "density",
+                                    "type": "integer"
+                                },
                                 "weightScale": "linear"
                             }
                         }
