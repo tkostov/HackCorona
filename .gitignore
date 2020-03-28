@@ -149,3 +149,5 @@ static
 
 .env
 frontend_2/node_modules/
+frontend_2/nproject/
+nbproject
