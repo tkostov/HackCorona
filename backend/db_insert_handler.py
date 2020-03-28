@@ -74,7 +74,9 @@ def main():
     lk_overview_collection = db["lk_overview"]
     lk_aggregated_collection = db["lk_aggregated"]
     # ll
+    #insert_rki_data(rki_collection)
     insert_aggregated_cases_data(lk_aggregated_collection)
+    #insert_aggregated_cases_data(lk_aggregated_collection)
 
 
 if __name__ == "__main__":
