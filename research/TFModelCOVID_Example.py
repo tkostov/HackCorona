@@ -153,12 +153,12 @@ covid.showStates(allRes, Par, name='InitStates', noS=True, Population=TPop)
 
 # AllGermanReported
 # loss = Loss_Poisson2(reported[0:LKReported.shape[0]], LKReported, Bg=0.1)
-loss = covid.Loss_FixedGaussian(reported[0:LKReported.shape[0]], np.squeeze(LKReported))
+loss = covid.Loss_FixedGaussian(reported[0:LKReported.shape[0]], LKReported)
 # toOptimize=[I0Var,InfectionRateTotal]
 opt = covid.optimizer(loss, otype="L-BFGS-B", NIter=50)  # var_list=toOptimize
 # opt = covid.optimizer(loss, otype="adam", oparam={"learning_rate": 0.0001}, NIter=100)
 res = covid.Optimize(opt, loss=loss, resVars=list(allRes) + allVars + [reported])
-covid.plotAgeGroups(res[-1],np.squeeze(LKReported))
+covid.plotAgeGroups(np.squeeze(np.sum(res[-1],-2)),np.squeeze(np.sum(LKReported,-2)))
 # (FinalState, allStatesScalar, allStatesQ1, allStatesQ2) = allRes
 resAllRes = res[0:4]
 

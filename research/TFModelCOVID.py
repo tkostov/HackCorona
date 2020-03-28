@@ -546,16 +546,16 @@ def measuredStates(allRes, Pop, byAge=False):
     """
     (FinalState, allStatesScalar, allStatesQ1, allStatesQ2) = allRes
     Scal = Pop * allStatesScalar;
-    # I = Pop * tf.squeeze(allStatesQ1[:, 0])
-    # Iq = Pop * tf.squeeze(allStatesQ1[:, 1])
-    Q = Pop * tf.squeeze(allStatesQ1[:, 2])
-    H = Pop * tf.squeeze(allStatesQ1[:, 3])
-    HIC = Pop * tf.squeeze(allStatesQ1[:, 4])
-    # Sq = Pop * tf.squeeze(allStatesQ2)
+    # I = Pop * allStatesQ1[:, 0]
+    # Iq = Pop * allStatesQ1[:, 1]
+    Q = Pop * allStatesQ1[:, 2]
+    H = Pop * allStatesQ1[:, 3]
+    HIC = Pop * allStatesQ1[:, 4]
+    # Sq = Pop * allStatesQ2
     # S = Scal[:, 0]; C = Scal[:, 1];
     CR = Scal[:, 2]; D = Scal[:, 3]
 
-    reported = tf.reduce_sum(Q + H + HIC + CR + D,1)   #
+    reported = tf.reduce_sum(Q + H + HIC,1) + CR + D   #
     hospitalized = tf.reduce_sum(H + HIC,1)
     dead = D
     cured = CR #  not C, since these are not reported
@@ -726,7 +726,7 @@ def showFit(measured, fitcurve, LKs=[0,100,200], indices=None):
     plt.figure('Measured, Fitted');
     lg = ['all Germany meas','fit']
     total = np.sum(measured,(1,2))
-    if fitcurve.ndim > 2:
+    if fitcurve.shape[1] >= len(LKs):
         totalFit = np.sum(fitcurve,(1,2))
     else:
         totalFit = np.sum(fitcurve, (1))
