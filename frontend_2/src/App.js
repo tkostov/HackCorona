@@ -7,9 +7,40 @@ import KeplerGl from "kepler.gl";
 import { addDataToMap } from "kepler.gl/actions";
 import useSwr from "swr";
 
+const customizedKeplerGlReducer = keplerGlReducer
+    .initialState({
+        uiState: {
+            // hide side panel to disallow user customize the map
+            readOnly: true,
+
+            // customize which map control button to show
+//      mapControls: {
+//        visibleLayers: {
+//          show: false
+//        },
+//        mapLegend: {
+//          show: true,
+//          active: true
+//        },
+//        toggle3d: {
+//          show: false
+//        },
+//        splitMap: {
+//          show: false
+//        }
+//      }
+        }
+    });
+
 const reducers = combineReducers({
-  keplerGl: keplerGlReducer
+    keplerGl: customizedKeplerGlReducer,
 });
+
+//const reducers = combineReducers({
+//    keplerGl: keplerGlReducer
+//});
+
+
 
 const store = createStore(reducers, {}, applyMiddleware(taskMiddleware));
 
