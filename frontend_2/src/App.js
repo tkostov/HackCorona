@@ -25,7 +25,7 @@ function Map() {
   const dispatch = useDispatch();
   const { data } = useSwr("covid", async () => {
     const response = await fetch(
-      "http://localhost:8080/all_infections"
+      "http://ec2-3-122-224-7.eu-central-1.compute.amazonaws.com:8080/ch_infections"
     );
     const data = await response.json();
     return data;
