@@ -8,7 +8,7 @@ import time
 import numbers
 import pandas as pd
 
-NumberTypes = (int,float,complex, np.ndarray, np.generic)
+NumberTypes = (int, float, complex, np.ndarray, np.generic)
 
 # The aim is to build a SEIR (Susceptible → Exposed → Infected → Removed)
 # Model with a number of (fittable) parameters which may even vary from
@@ -23,8 +23,8 @@ if False:
     defaultLossDataType = "float64"
 else:
     defaultLossDataType = "float32"
-defaultTFDataType="float32"
-defaultTFCpxDataType="complex64"
+defaultTFDataType = "float32"
+defaultTFCpxDataType = "complex64"
 
 
 def Init(noCuda=False):
@@ -33,10 +33,12 @@ def Init(noCuda=False):
     """
     if noCuda is True:
         os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
-    tf.reset_default_graph() # currently just to shield tensorflow from the main program
+    tf.reset_default_graph()  # currently just to shield tensorflow from the main program
+
 
 Init();
 sess = tf.Session()
+
 
 # Here some code from the inverse Modeling Toolbox (Rainer Heintzmann)
 
@@ -45,14 +47,15 @@ def iterativeOptimizer(myTFOptimization, NIter, loss, session, verbose=False):
         raise ValueError("NIter has to be positive")
     myRunOptions = config_pb2.RunOptions(report_tensor_allocations_upon_oom=True)
     for n in range(NIter):
-        summary, myloss = session.run([myTFOptimization,loss], options=myRunOptions)
+        summary, myloss = session.run([myTFOptimization, loss], options=myRunOptions)
         if np.isnan(myloss):
             raise ValueError("Loss is NaN. Aborting iteration.")
         if verbose:
-            print(str(n) +"/" + str(NIter) + ": " + str(myloss))
+            print(str(n) + "/" + str(NIter) + ": " + str(myloss))
     return myloss, summary
 
-def optimizer(loss, otype = 'L-BFGS-B', NIter = 300, oparam = {'gtol': 0, 'learning_rate': None}, var_list = None, verbose = False):
+
+def optimizer(loss, otype='L-BFGS-B', NIter=300, oparam={'gtol': 0, 'learning_rate': None}, var_list=None, verbose=False):
     """
     defines an optimizer to be used with "Optimize"
     This function combines various optimizers from tensorflow and SciPy (with tensorflow compatibility)
@@ -85,45 +88,45 @@ def optimizer(loss, otype = 'L-BFGS-B', NIter = 300, oparam = {'gtol': 0, 'learn
     """
     if NIter <= 0:
         raise ValueError("nIter has to be positive")
-    optimStep=0
+    optimStep = 0
     if (var_list is not None) and not np.iterable(var_list):
         var_list = [var_list]
     # these optimizer types work strictly stepwise
     elif otype == 'sgrad':
         learning_rate = oparam["learning_rate"]
-        print("setting up sgrad optimization with ",NIter," iterations.")
-        optimStep = lambda loss: tf.train.GradientDescentOptimizer(1e4).minimize(loss, var_list=var_list) # 1.0
+        print("setting up sgrad optimization with ", NIter, " iterations.")
+        optimStep = lambda loss: tf.train.GradientDescentOptimizer(1e4).minimize(loss, var_list=var_list)  # 1.0
     elif otype == 'nesterov':
         learning_rate = oparam["learning_rate"]
-        print("setting up nesterov optimization with ",NIter," iterations.")
-        optimStep = lambda loss: tf.train.MomentumOptimizer(1e4, use_nesterov=True, momentum=1e-4).minimize(loss, var_list=var_list) # 1.0
+        print("setting up nesterov optimization with ", NIter, " iterations.")
+        optimStep = lambda loss: tf.train.MomentumOptimizer(1e4, use_nesterov=True, momentum=1e-4).minimize(loss, var_list=var_list)  # 1.0
     elif otype == 'adam':
         learning_rate = oparam["learning_rate"]
         if learning_rate == None:
             learning_rate = 0.3
-        print("setting up adam optimization with ",NIter," iterations, learning_rate: ", learning_rate, ".")
-        optimStep = lambda loss: tf.train.AdamOptimizer(learning_rate,0.9,0.999).minimize(loss, var_list=var_list) # 1.0
+        print("setting up adam optimization with ", NIter, " iterations, learning_rate: ", learning_rate, ".")
+        optimStep = lambda loss: tf.train.AdamOptimizer(learning_rate, 0.9, 0.999).minimize(loss, var_list=var_list)  # 1.0
     elif otype == 'adadelta':
         learning_rate = oparam["learning_rate"]
-        print("setting up adadelta optimization with ",NIter," iterations.")
-        optimStep = lambda loss: tf.train.AdadeltaOptimizer(0.01,0.9,0.999).minimize(loss, var_list=var_list) # 1.0
+        print("setting up adadelta optimization with ", NIter, " iterations.")
+        optimStep = lambda loss: tf.train.AdadeltaOptimizer(0.01, 0.9, 0.999).minimize(loss, var_list=var_list)  # 1.0
     elif otype == 'proxgrad':
-        print("setting up proxgrad optimization with ",NIter," iterations.")
-        optimStep = lambda loss: tf.train.ProximalGradientDescentOptimizer(0.0001).minimize(loss, var_list=var_list) # 1.0
+        print("setting up proxgrad optimization with ", NIter, " iterations.")
+        optimStep = lambda loss: tf.train.ProximalGradientDescentOptimizer(0.0001).minimize(loss, var_list=var_list)  # 1.0
     if optimStep != 0:
         myoptim = optimStep(loss)
         return lambda session: iterativeOptimizer(myoptim, NIter, loss, session=session, verbose=verbose)
     # these optimizers perform the whole iteration
-    else:  #otype=='L-BFGS-B':
-#        if not 'maxiter' in oparam:
-        oparam = dict(oparam) # make a shallow copy
+    else:  # otype=='L-BFGS-B':
+        #        if not 'maxiter' in oparam:
+        oparam = dict(oparam)  # make a shallow copy
         oparam['maxiter'] = NIter
-        if oparam['learning_rate']==None:
+        if oparam['learning_rate'] == None:
             del oparam['learning_rate']
         if not 'gtol' in oparam:
-            oparam['gtol']= 0
+            oparam['gtol'] = 0
         myOptimizer = tf.contrib.opt.ScipyOptimizerInterface(loss, options=oparam, method=otype, var_list=var_list)
-        return lambda session: myOptimizer.minimize(session) # 'L-BFGS-B'
+        return lambda session: myOptimizer.minimize(session)  # 'L-BFGS-B'
 
 
 def Reset():
@@ -212,50 +215,60 @@ def Optimize(myoptimizer=None, loss=None, NumIter=40, TBSummary=False, TBSummary
         return res
     #    nip.view(toshow)
 
+
 def datatype(tfin):
     if istensor(tfin):
         return tfin.dtype
     else:
-        if isinstance(tfin,np.ndarray):
+        if isinstance(tfin, np.ndarray):
             return tfin.dtype.name
-        return tfin # assuming this is already the type
+        return tfin  # assuming this is already the type
+
 
 def istensor(tfin):
-    return isinstance(tfin,tf.Tensor) or isinstance(tfin,tf.Variable)
+    return isinstance(tfin, tf.Tensor) or isinstance(tfin, tf.Variable)
+
 
 def iscomplex(mytype):
-    mytype=str(datatype(mytype))
-    return (mytype == "complex64") or (mytype == "complex128") or (mytype == "complex64_ref") or (mytype == "complex128_ref") or (mytype=="<dtype: 'complex64'>") or (mytype=="<dtype: 'complex128'>")
+    mytype = str(datatype(mytype))
+    return (mytype == "complex64") or (mytype == "complex128") or (mytype == "complex64_ref") or (mytype == "complex128_ref") or (mytype == "<dtype: 'complex64'>") or (
+                mytype == "<dtype: 'complex128'>")
+
 
 def isNumber(val):
-    return isinstance(val,numbers.Number)
+    return isinstance(val, numbers.Number)
+
 
 def isList(val):
-    return isinstance(val,list)
+    return isinstance(val, list)
+
 
 def isTuple(val):
-    return isinstance(val,tuple)
+    return isinstance(val, tuple)
+
 
 def totensor(img):
     if istensor(img):
         return img
-    if not isNumber(img) and ((img.dtype==defaultTFDataType) or (img.dtype==defaultTFCpxDataType)):
-        img=tf.constant(img)
+    if not isNumber(img) and ((img.dtype == defaultTFDataType) or (img.dtype == defaultTFCpxDataType)):
+        img = tf.constant(img)
     else:
         if iscomplex(img):
-            img=tf.constant(img,defaultTFCpxDataType)
+            img = tf.constant(img, defaultTFCpxDataType)
         else:
-            img=tf.constant(img,defaultTFDataType)
+            img = tf.constant(img, defaultTFDataType)
     return img
+
 
 def doCheckScaling(fwd, meas):
     sF = ev(tf.reduce_mean(totensor(fwd)))
     sM = ev(tf.reduce_mean(totensor(meas)))
-    R = sM/sF
+    R = sM / sF
     if abs(R) < 0.7 or abs(R) > 1.3:
-        print("Mean of measured data: "+str(sM)+", Mean of forward model with initialization: "+str(sF)+" Ratio: "+str(R))
-        print("WARNING!! The forward projected sum is significantly different from the provided measured data. This may cause problems during optimization. To prevent this warning: set checkScaling=False for your loss function.")
-    return tf.check_numerics(fwd,"Detected NaN or Inf in loss function") # also checks for NaN values during runtime
+        print("Mean of measured data: " + str(sM) + ", Mean of forward model with initialization: " + str(sF) + " Ratio: " + str(R))
+        print(
+            "WARNING!! The forward projected sum is significantly different from the provided measured data. This may cause problems during optimization. To prevent this warning: set checkScaling=False for your loss function.")
+    return tf.check_numerics(fwd, "Detected NaN or Inf in loss function")  # also checks for NaN values during runtime
 
 
 # %% this section defines a number of loss functions. Note that they often need fixed input arguments for measured data and sometimes more parameters
@@ -343,9 +356,10 @@ def Loss_Poisson2(fwd, meas, Bg=0.05, checkPos=False, lossDataType=None, checkSc
 
         return BarePoisson(fwd) / meanmeas
 
+
 # ---- End of code from the inverse Modelling Toolbox
 
-def newState(S,Sq,I,Iq,Q,H,HIC,C,CR,D):
+def newState(S, Sq, I, Iq, Q, H, HIC, C, CR, D):
     """
     alocates and initializes a new single time state of the mode.
     For details see CORONA_Model.ppt
@@ -373,36 +387,49 @@ def newState(S,Sq,I,Iq,Q,H,HIC,C,CR,D):
     if not istensor(D):
         D = tf.constant(D, name="D0")  # dead
 
-    return cState(S,Sq,I,Iq,Q,H,HIC,C,CR,D)
+    return cState(S, Sq, I, Iq, Q, H, HIC, C, CR, D)
+
 
 class cState:
-    def __init__(self, S,Sq,I,Iq,Q,H,HIC,C,CR,D):
-        self.S = S;self.Sq = Sq;self.I = I;self.Iq = Iq;self.Q = Q;self.H = H;self.HIC = HIC;self.C = C;self.CR = CR;self.D = D
+    def __init__(self, S, Sq, I, Iq, Q, H, HIC, C, CR, D):
+        self.S = S;
+        self.Sq = Sq;
+        self.I = I;
+        self.Iq = Iq;
+        self.Q = Q;
+        self.H = H;
+        self.HIC = HIC;
+        self.C = C;
+        self.CR = CR;
+        self.D = D
+
 
 class cPar:
     def __init__(self, q, ii, iq, ih, d, h, hic, r, NQ=14, NI=24, quarantineTrace=None):
-        self.q = totensor(q); # rate of susceptible being quarantined
-        self.ii = totensor(ii); # 2nd order rate of S infection by infected
-        self.iq = totensor(iq) # 2nd order rate of S infection by reported quarantined
-        self.ih = totensor(ih) # 2nd order rate of S infection by hospitalized
+        self.q = totensor(q);  # rate of susceptible being quarantined
+        self.ii = totensor(ii);  # 2nd order rate of S infection by infected
+        self.iq = totensor(iq)  # 2nd order rate of S infection by reported quarantined
+        self.ih = totensor(ih)  # 2nd order rate of S infection by hospitalized
         # self.qi = totensor(qi) # 2nd order rate of quarantined S by infected.  Assumption is that quarantined cannot be infected by hospitalized.
         # self.qq = totensor(qq) # 2nd order rate of quarantined S by other quarantined (co-habitant).
-        self.d = totensor(d) # probability of an infection being detected and quarantined
-        self.h = totensor(h) # probability of an infected (reported or not) becoming ill and hospitalized
-        self.hic = totensor(hic) # probability of a hospitalized person becoming severely ill needing an ICU
-        self.r = totensor(r) # probability of a severely ill person to die
+        self.d = totensor(d)  # probability of an infection being detected and quarantined
+        self.h = totensor(h)  # probability of an infected (reported or not) becoming ill and hospitalized
+        self.hic = totensor(hic)  # probability of a hospitalized person becoming severely ill needing an ICU
+        self.r = totensor(r)  # probability of a severely ill person to die
         # self.c = tf.constant(c) # probability of a hospitalized person (after N days) being cured
-        self.NQ = totensor(NQ) # number of days for quarantine
-        self.NI = totensor(NI) # number of days to be infected
+        self.NQ = totensor(NQ)  # number of days for quarantine
+        self.NI = totensor(NI)  # number of days to be infected
         self.quarantineTrace = quarantineTrace;
 
+
 def newQueue(numTimes, entryVal=None):
-    Vals = np.zeros(numTimes,CalcFloatStr)
+    Vals = np.zeros(numTimes, CalcFloatStr)
     if entryVal is not None:
         Vals[0] = entryVal
     return tf.constant(Vals)
 
-def advanceQueue(oldQueue,input=None):
+
+def advanceQueue(oldQueue, input=None):
     """
     models a queue
     """
@@ -411,12 +438,13 @@ def advanceQueue(oldQueue,input=None):
         input = tf.constant(np.zeros(oldQueue.shape[1:], CalcFloatStr))
     else:
         if isinstance(input, NumberTypes) and np.ndarray(input).ndim < oldQueue.shape[-1]:
-            input = tf.constant(input * np.ones(oldQueue.shape[1:],CalcFloatStr))
+            input = tf.constant(input * np.ones(oldQueue.shape[1:], CalcFloatStr))
     if len(input.shape.dims) == len(oldQueue.shape.dims):
         myQueue = tf.concat((input, oldQueue[:-1]), axis=0)
     else:
         myQueue = tf.concat(([input], oldQueue[:-1]), axis=0)
     return myQueue, output
+
 
 def transferQueue(fromQueue, toQueue, rate):
     """
@@ -428,146 +456,164 @@ def transferQueue(fromQueue, toQueue, rate):
     resFrom = fromQueue - trans
     return resFrom, resTo
 
+
 def removeFromQueue(fromQueue, rate):
     """
     describes the death of hospitalized infected individuals. rate can be an age-dependent function
     """
     trans = fromQueue * rate
     resFrom = fromQueue - trans
-    return resFrom, tf.reduce_sum(trans,0)
+    return resFrom, tf.reduce_sum(trans, 0)
+
 
 def getTotalQueue(myQueue):
     return tf.reduce_sum(myQueue)
+
 
 def stateSum(State):
     """
     retrieves the sum of all states for checking and debugging purposes.
     """
-    mySum=0.0;
+    mySum = 0.0;
     members = vars(State)
     for m in members:
-        val=tf.reduce_sum(members[m]).eval(session=sess)
-        print(m+': ',val)
+        val = tf.reduce_sum(members[m]).eval(session=sess)
+        print(m + ': ', val)
         mySum += val
     print(mySum)
     return mySum
 
+
 def ev(avar):
     if istensor(avar):
-        val=avar.eval(session=sess)
+        val = avar.eval(session=sess)
     else:
-        val=avar
+        val = avar
     return val
+
 
 def newTime(State, Par):
     """
     this is the most important function of the model. It contains all the mathematics to advance by one timestep.
     """
     # first determid the various transfer rates (e.g. also stuff to put into the queues)
-    # not in the line below, that all infected ppl matter, no matter which age group. The sum results in a scalar!
-    infections = (State.S * tf.reduce_sum(State.I * Par.ii + State.Q * Par.iq + State.H * Par.ih,[0,2],keepdims=True));
+    if True:
+        # all infected ppl matter, no matter which age group. The sum results in a scalar!
+        infections = (State.S * tf.reduce_sum(State.I * Par.ii + State.Q * Par.iq + State.H * Par.ih, [0, 2], keepdims=True));
+    else:
+        # all infected ppl matter, no matter which age group or district. The sum results in a scalar!
+        infections = (State.S * tf.reduce_sum(State.I * Par.ii + State.Q * Par.iq + State.H * Par.ih, [0, 1, 2], keepdims=True));
+
     # infectionsCountry = State.S * tf.reduce_sum(State.I * Par.ii + State.Q * Par.iq + State.H * Par.ih);
     # TotalQuarantined = getTotalQueue(State.Sq)# exclude the last bin from the chance of infection (to warrant total number)
     # infectionsQ = State.I * TotalQuarantined * Par.qi + TotalQuarantined * TotalQuarantined * Par.qq
     # stateSum(State)
-    Squarantined = State.S * Par.q # newly quarantined persons
+    Squarantined = State.S * Par.q  # newly quarantined persons
     # quarantined ppl getting infected during quarantine are neglected for now!
     # now lets calculate and apply the transfers between queues
-    I,Q = transferQueue(State.I, State.Q, Par.d) # infected ppl. get detected by the system
-    I,Iq = transferQueue(I, State.Iq, Par.q) # quarantine of infected ppl. They will leave either by making it to the end of infection (cured) or being detected
+    I, Q = transferQueue(State.I, State.Q, Par.d)  # infected ppl. get detected by the system
+    I, Iq = transferQueue(I, State.Iq, Par.q)  # quarantine of infected ppl. They will leave either by making it to the end of infection (cured) or being detected
     # The line below is not quite correct, as the hospitalization rate is slightly lowered by line above!
-    I,H = transferQueue(I, State.H, Par.h) # infected and hospitalized ppl. get detected by the system
-    Iq,H = transferQueue(Iq, H, Par.h) # hospitalization of quarantined infected ppl.
-    Iq,Q = transferQueue(Iq, Q, Par.d) # hospitalization of quarantined infected ppl.
-    H,HIC = transferQueue(H, State.HIC, Par.hic) # infected and hospitalized ppl. get detected by the system
-    HIC,deaths = removeFromQueue(HIC, Par.r)  # deaths
+    I, H = transferQueue(I, State.H, Par.h)  # infected and hospitalized ppl. get detected by the system
+    Iq, H = transferQueue(Iq, H, Par.h)  # hospitalization of quarantined infected ppl.
+    Iq, Q = transferQueue(Iq, Q, Par.d)  # hospitalization of quarantined infected ppl.
+    H, HIC = transferQueue(H, State.HIC, Par.hic)  # infected and hospitalized ppl. get detected by the system
+    HIC, deaths = removeFromQueue(HIC, Par.r)  # deaths
     # now the time-dependent actions: advancing the queues and dequiing
     Sq, dequarantined = advanceQueue(State.Sq, Squarantined)
-    Iq, Idequarantined = advanceQueue(State.Iq) # this queue was copied
+    Iq, Idequarantined = advanceQueue(State.Iq)  # this queue was copied
     I, curedI = advanceQueue(I, infections)
     Q, curedQ = advanceQueue(Q, 0)
     HIC, backToHospital = advanceQueue(HIC, 0)  # surviving hospital or
-    H, curedH = advanceQueue(H, backToHospital) # surviving intensive care
+    H, curedH = advanceQueue(H, backToHospital)  # surviving intensive care
     # finally work the dequeued into the states
     C = State.C + curedI + Idequarantined  # the quarantined infected are considered "cured" if they reached the end of infection, even if still in quarantine
     CR = State.CR + curedQ + curedH  # reported cured
-    S = State.S - tf.squeeze(infections)  + dequarantined - Squarantined   # - infectionsQ
+    S = State.S - tf.squeeze(infections) + dequarantined - Squarantined  # - infectionsQ
     D = State.D + deaths
     # reportedInfections = tf.reduce_sum(I) + tf.reduce_sum(Q) + tf.reduce_sum(H) # all infected reported
 
-    State = cState(S,Sq,I,Iq,Q,H,HIC,C,CR,D)
+    State = cState(S, Sq, I, Iq, Q, H, HIC, C, CR, D)
     # stateSum(State)
     return State
+
 
 def buildStateModel(initState, Par, numTimes):
     State = initState
     # allReported = [];allDead = [];
-    allStatesScalar = [];allStatesQ1 = [];allStatesQ2 = []
-    quarantineTrace = Par.quarantineTrace # The quarantine operations should be handled
+    allStatesScalar = [];
+    allStatesQ1 = [];
+    allStatesQ2 = []
+    quarantineTrace = Par.quarantineTrace  # The quarantine operations should be handled
     # as sudden delta events that quarantine a certain percentage of the population
     for t in range(numTimes):
-        print('Building model for timepoint',t)
+        print('Building model for timepoint', t)
         if quarantineTrace is not None:
             if isNumber(quarantineTrace):
                 Par.Q = quarantineTrace
             else:
                 Par.q = quarantineTrace[t]
         State = newTime(State, Par)
-        #, reported, dead
-        #allReported.append(reported)
-        #allDead.append(dead)
+        # , reported, dead
+        # allReported.append(reported)
+        # allDead.append(dead)
         allStatesScalar.append(tf.stack((State.S, State.C, State.CR, State.D)))
-        allStatesQ1.append(tf.stack((State.I, State.Iq, State.Q,State.H,State.HIC)))
+        allStatesQ1.append(tf.stack((State.I, State.Iq, State.Q, State.H, State.HIC)))
         allStatesQ2.append(State.Sq)
-    #allReported = tf.stack(allReported)
-    #allDead = tf.stack(allDead)
+    # allReported = tf.stack(allReported)
+    # allDead = tf.stack(allDead)
     allStatesScalar = tf.stack(allStatesScalar)
     allStatesQ1 = tf.stack(allStatesQ1)
     allStatesQ2 = tf.stack(allStatesQ2)
     return State, allStatesScalar, allStatesQ1, allStatesQ2
+
 
 def retrieveData():
     import json_to_pandas
     dl = json_to_pandas.DataLoader()  # instantiate DataLoader #from_back_end=True
     data_dict = dl.process_data()  # loads and forms the data dictionary
     rki_data = data_dict["RKI_Data"]  # only RKI dataframe
-    print('Last Day loaded: '+str(pd.to_datetime(np.max(rki_data.Meldedatum), unit='ms')))
+    print('Last Day loaded: ' + str(pd.to_datetime(np.max(rki_data.Meldedatum), unit='ms')))
     return rki_data
+
 
 def deltas(WhenHowMuch, SimTimes):
     res = np.zeros(SimTimes)
-    for w,h in WhenHowMuch:
-        res[w]=h;
+    for w, h in WhenHowMuch:
+        res[w] = h;
     return res
+
 
 def measuredStates(allRes, Pop, byAge=False):
     """
      converts the simulated states to measured data
     """
     (FinalState, allStatesScalar, allStatesQ1, allStatesQ2) = allRes
-    Scal = Pop * allStatesScalar;
+    Scal = allStatesScalar;
     # I = Pop * allStatesQ1[:, 0]
     # Iq = Pop * allStatesQ1[:, 1]
     Q = Pop * allStatesQ1[:, 2]
     H = Pop * allStatesQ1[:, 3]
     HIC = Pop * allStatesQ1[:, 4]
     # Sq = Pop * allStatesQ2
-    # S = Scal[:, 0]; C = Scal[:, 1];
-    CR = Scal[:, 2]; D = Scal[:, 3]
+    # S = Scal[:, 0]; C = Pop * Scal[:, 1];
+    CR = Pop * Scal[:, 2];
+    D = Pop * Scal[:, 3]
 
-    reported = tf.reduce_sum(Q + H + HIC,1) + CR + D   #
-    hospitalized = tf.reduce_sum(H + HIC,1)
+    reported = tf.reduce_sum(Q + H + HIC, 1) + CR + D  #
+    hospitalized = tf.reduce_sum(H + HIC, 1)
     dead = D
-    cured = CR #  not C, since these are not reported
+    cured = CR  # not C, since these are not reported
 
     if not byAge:
-        reported = tf.reduce_sum(reported,(-2,-1))
-        hospitalized = tf.reduce_sum(hospitalized,(-2,-1))
-        dead = tf.reduce_sum(dead,(-2,-1))
-        cured = tf.reduce_sum(cured,(-2,-1))
+        reported = tf.reduce_sum(reported, (-2, -1))
+        hospitalized = tf.reduce_sum(hospitalized, (-2, -1))
+        dead = tf.reduce_sum(dead, (-2, -1))
+        cured = tf.reduce_sum(cured, (-2, -1))
     return reported, hospitalized, dead, cured
 
-def plot2Ax(data, AxScale, AxLabels=["days","fraction","population"], mylegend=None, title=None):
+
+def plot2Ax(data, AxScale, AxLabels=["days", "fraction", "population"], mylegend=None, title=None):
     fig, ax1 = plt.subplots()
     plt.title(title)
     # fig = plt.figure
@@ -583,11 +629,12 @@ def plot2Ax(data, AxScale, AxLabels=["days","fraction","population"], mylegend=N
         ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
         # ax2.plot(data*AxScale)
         rng = ax1.get_ylim()
-        ax2.set_ylim([rng[0]*AxScale,rng[1]*AxScale])
+        ax2.set_ylim([rng[0] * AxScale, rng[1] * AxScale])
         ax2.tick_params(axis='y')
         ax2.set_ylabel(AxLabels[2])  # we already handled the x-label with ax1
         fig.tight_layout()  # otherwise the right y-label is slightly clipped
     plt.show()
+
 
 def showStates(allRes, Par, showAllStates=False, name="States", noS=False, Population=None):
     (FinalState, allStatesScalar, allStatesQ1, allStatesQ2) = allRes
@@ -595,15 +642,17 @@ def showStates(allRes, Par, showAllStates=False, name="States", noS=False, Popul
     allStatesQ2 = ev(allStatesQ2);
     Scal = ev(allStatesScalar);
 
-    I = np.sum(allStatesQ1[:, 0], (-3,-2,-1))
-    Iq = np.sum(allStatesQ1[:, 1], (-3,-2,-1))
-    Q = np.sum(allStatesQ1[:, 2], (-3,-2,-1))
-    H = np.sum(allStatesQ1[:, 3], (-3,-2,-1))
-    HIC = np.sum(allStatesQ1[:, 4], (-3,-2,-1))
-    Sq = np.sum(allStatesQ2, (-3,-2,-1))
+    I = np.sum(allStatesQ1[:, 0], (-3, -2, -1))
+    Iq = np.sum(allStatesQ1[:, 1], (-3, -2, -1))
+    Q = np.sum(allStatesQ1[:, 2], (-3, -2, -1))
+    H = np.sum(allStatesQ1[:, 3], (-3, -2, -1))
+    HIC = np.sum(allStatesQ1[:, 4], (-3, -2, -1))
+    Sq = np.sum(allStatesQ2, (-3, -2, -1))
 
-    S = np.sum(Scal[:, 0],(-2,-1));C = np.sum(Scal[:, 1],(-2,-1));
-    CR = np.sum(Scal[:, 2],(-2,-1));D = np.sum(Scal[:, 3],(-2,-1))
+    S = np.sum(Scal[:, 0], (-2, -1));
+    C = np.sum(Scal[:, 1], (-2, -1));
+    CR = np.sum(Scal[:, 2], (-2, -1));
+    D = np.sum(Scal[:, 3], (-2, -1))
 
     # plt.figure(name);
     if noS:
@@ -612,13 +661,13 @@ def showStates(allRes, Par, showAllStates=False, name="States", noS=False, Popul
     else:
         toPlot = np.transpose(np.stack([S, C * 10, CR * 10, D * 10, I * 10, Iq * 10, Q * 10, H * 10, HIC * 10, Sq]))
         mylegend = ['S', 'C (x10)', 'CR (x10)', 'D (x10)', 'I (x10)', 'Iq (x10)', 'Q (x10)', 'H (x10)', 'HIC (x10)', 'Sq']
-    plot2Ax(toPlot, Population, ['days','fraction','Population'], mylegend, title=name);
+    plot2Ax(toPlot, Population, ['days', 'fraction', 'Population'], mylegend, title=name);
 
     # plt.figure('Infected, Reported, Dead');
-    allReported = Q + H + HIC + CR + D # + C + D # all infected reported
-    toPlot = np.transpose(np.stack([I, allReported, D, C+CR, Par.quarantineTrace*np.ones(C.shape)]))
-    mylegend=['infected','reported (x10)','dead (x10)','cured=C+CR','quarantineTrace']
-    plot2Ax(toPlot, Population, ['days','fraction','Population'], mylegend, title=name);
+    allReported = Q + H + HIC + CR + D  # + C + D # all infected reported
+    toPlot = np.transpose(np.stack([I, allReported, D, C + CR, Par.quarantineTrace * np.ones(C.shape)]))
+    mylegend = ['infected', 'reported', 'dead', 'cured=C+CR', 'quarantineTrace']
+    plot2Ax(toPlot, Population, ['days', 'fraction', 'Population'], mylegend, title=name);
 
     # plt.gca().set_xlim(myax.get_xlim());
     # plt.gca().set_ylim([-0.05,maxY]);
@@ -640,16 +689,20 @@ def showStates(allRes, Par, showAllStates=False, name="States", noS=False, Popul
         # plt.imshow(np.squeeze(allStatesQ2.eval(session=sess))
         # res = M.eval()
 
-def toDay(timeInMs):
-    return int(timeInMs / (1000*60*60*24))
 
-def getLabels(rki_data,label):
+def toDay(timeInMs):
+    return int(timeInMs / (1000 * 60 * 60 * 24))
+
+
+def getLabels(rki_data, label):
     try:
         labels = rki_data[label].unique()
-        labels.sort(); labels = labels.tolist()
+        labels.sort();
+        labels = labels.tolist()
     except KeyError:
         labels = ['BRD']
     return labels
+
 
 def cumulate(rki_data):
     # rki_data.keys()  # IdBundesland', 'Bundesland', 'Landkreis', 'Altersgruppe', 'Geschlecht',
@@ -658,102 +711,114 @@ def cumulate(rki_data):
     rki_data = rki_data.sort_values('Meldedatum')
     day1 = toDay(np.min(rki_data['Meldedatum']))
     dayLast = toDay(np.max(rki_data['Meldedatum']))
-    LKs = getLabels(rki_data,'Landkreis')
-    Ages = getLabels(rki_data,'Altersgruppe')
-    Geschlechter = getLabels(rki_data,'Geschlecht')
+    LKs = getLabels(rki_data, 'Landkreis')
+    Ages = getLabels(rki_data, 'Altersgruppe')
+    Geschlechter = getLabels(rki_data, 'Geschlecht')
     CumulSumCase = np.zeros([len(LKs), len(Ages), len(Geschlechter)])
-    AllCumulCase = np.zeros([dayLast-day1+1, len(LKs), len(Ages), len(Geschlechter)])
+    AllCumulCase = np.zeros([dayLast - day1 + 1, len(LKs), len(Ages), len(Geschlechter)])
     CumulSumDead = np.zeros([len(LKs), len(Ages), len(Geschlechter)])
-    AllCumulDead = np.zeros([dayLast-day1+1, len(LKs), len(Ages), len(Geschlechter)])
+    AllCumulDead = np.zeros([dayLast - day1 + 1, len(LKs), len(Ages), len(Geschlechter)])
 
     # CumulMale = np.zeros(dayLast-day1); CumulFemale = np.zeros(dayLast-day1)
     # TMale = 0; TFemale = 0; # TAge = zeros()
-    prevday=-1;
+    prevday = -1;
     for index, row in rki_data.iterrows():
         # datetime = pd.to_datetime(row['Meldedatum'], unit='ms').to_pydatetime()
-        day = toDay(row['Meldedatum'])-day1 # convert to days with an offset
+        day = toDay(row['Meldedatum']) - day1  # convert to days with an offset
         # print(day)
         myLK = LKs.index(row['Landkreis'])
         myAge = Ages.index(row['Altersgruppe'])
         myG = Geschlechter.index(row['Geschlecht'])
         AnzahlFall = row['AnzahlFall']
         AnzahlTodesfall = row['AnzahlTodesfall']
-        CumulSumCase[myLK,myAge,myG] += AnzahlFall
-        AllCumulCase[prevday+1:day+1, :, :, :] = CumulSumCase
+        CumulSumCase[myLK, myAge, myG] += AnzahlFall
+        AllCumulCase[prevday + 1:day + 1, :, :, :] = CumulSumCase
         CumulSumDead[myLK, myAge, myG] += AnzahlTodesfall
-        AllCumulDead[prevday+1:day+1, :, :, :] = CumulSumDead
-        prevday=day
-    return AllCumulCase, AllCumulDead,(LKs,Ages,Geschlechter)
+        AllCumulDead[prevday + 1:day + 1, :, :, :] = CumulSumDead
+        prevday = day
+    return AllCumulCase, AllCumulDead, (LKs, Ages, Geschlechter)
+
 
 def toTrace(x):
     if isNumber(x) or isTuple(x) or isList(x):
         aramp = tf.constant(np.arange(np.max(x)), dtype=CalcFloatStr)
         if isNumber(x):
             x = [x]
-        x = tf.reshape(aramp,x)  # if you get an error here, the size is not 1D!
+        x = tf.reshape(aramp, x)  # if you get an error here, the size is not 1D!
     else:
         x = totensor(x)
     return x
 
+
 def gaussian(x, mu=0.0, sig=1.0):
-    x = toTrace(x); mu = totensor(mu); sig=totensor(sig)
-    vals = tf.exp(-(x - mu) ** 2. / (2 * (sig** 2.)))
-    vals = vals / tf.reduce_sum(vals) # normalize (numerical !, since the domain is not infinite)
+    x = toTrace(x);
+    mu = totensor(mu);
+    sig = totensor(sig)
+    vals = tf.exp(-(x - mu) ** 2. / (2 * (sig ** 2.)))
+    vals = vals / tf.reduce_sum(vals)  # normalize (numerical !, since the domain is not infinite)
     return vals
 
+
 def sigmoid(x, mu=0.0, sig=1.0, offset=0.0):
-    x = toTrace(x);mu = totensor(mu); sig=totensor(sig)
-    vals = 1. / (1. + tf.exp(-(x - mu)/sig)) + offset
-    vals = vals / tf.reduce_sum(vals) # normalize (numerical !, since the domain is not infinite)
+    x = toTrace(x);
+    mu = totensor(mu);
+    sig = totensor(sig)
+    vals = 1. / (1. + tf.exp(-(x - mu) / sig)) + offset
+    vals = vals / tf.reduce_sum(vals)  # normalize (numerical !, since the domain is not infinite)
     return vals
+
 
 def PrepareFit(Par, Vars):
     allVars = []
     for v in Vars:
         myvar = getattr(Par, v)
-        tofit = tf.Variable(initial_value=myvar,name=v)
-        setattr(Par,v, tofit)
+        tofit = tf.Variable(initial_value=myvar, name=v)
+        setattr(Par, v, tofit)
         allVars.append(tofit)
     init = tf.global_variables_initializer()  # prepare tensorflow for fitting
     sess.run(init)
     return Par, allVars
 
-def showFit(measured, fitcurve, LKs=[0,100,200], indices=None):
+
+def showFit(measured, fitcurve, LKs=[0, 100, 200], indices=None):
     """
         plots the overall detetected infected cases and a few example districts
         and the corresponding fit results from the model
     """
     plt.figure('Measured, Fitted');
-    lg = ['all Germany meas','fit']
-    total = np.sum(measured,(1,2))
+    lg = ['all Germany meas', 'fit']
+    total = np.sum(measured, (1, 2))
     if fitcurve.shape[1] >= len(LKs):
-        totalFit = np.sum(fitcurve,(1,2))
+        totalFit = np.sum(fitcurve, (1, 2))  # sum over LK and age
     else:
-        totalFit = np.sum(fitcurve, (1))
-        LKs=[]
+        totalFit = np.sum(fitcurve, (1, 2))
+        LKs = []
     color = next(plt.gca()._get_lines.prop_cycler)['color']
-    plt.plot(total,'o',color=color);
-    plt.plot(totalFit,color=color)
+    plt.plot(total, 'o', color=color);
+    plt.plot(totalFit, color=color)
     for lk in LKs:
         if indices is not None:
-            lg.append('100* '+indices[0][lk])
+            lg.append('100* ' + indices[0][lk])
             lg.append('100* fit')
         else:
-            lg.append('100* '+str(lk),'100* fit')
-        mL = np.sum(measured[:,lk],1)*100
+            lg.append('100* ' + str(lk), '100* fit')
+        mL = np.sum(measured[:, lk], 1) * 100
         color = next(plt.gca()._get_lines.prop_cycler)['color']
-        plt.plot(mL,'o',color=color);
-        fL = np.sum(fitcurve[:,lk],1)*100
-        plt.plot(fL,color=color)
+        plt.plot(mL, 'o', color=color);
+        fL = np.sum(fitcurve[:, lk], 1) * 100
+        plt.plot(fL, color=color)
     plt.legend(lg)
-    plt.xlabel('days');plt.ylabel('population')
+    plt.xlabel('days')
+    plt.ylabel('population')
 
-def plotAgeGroups(res1,res2):
+
+def plotAgeGroups(res1, res2):
     plt.figure()
+    plt.title('Age Groups')
     plt.plot(res1)
     plt.gca().set_prop_cycle(None)
-    plt.plot(res2,'--')
-
+    plt.plot(res2, '--')
+    plt.xlabel('days')
+    plt.ylabel('population')
 
 # if __name__ == '__main__':
-
