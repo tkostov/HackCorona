@@ -200,7 +200,7 @@ def get_infections_sqrt_scaled():
     for x in backend_data:
         if datetime.datetime.strptime(x["date"], '%Y-%m-%d').month > 1 or datetime.datetime.strptime(x["date"],
                                                                                                               '%Y-%m-%d').year > 2020:
-            rows_data.append([int(sqrt(x["cases"])), int(sqrt(x["deaths"])), int(sqrt(x["icu"])), x["latitude"], x["longitude"],
+            rows_data.append([int(sqrt(x["cases"])), int(sqrt(x["fatalities"])), int(sqrt(x["icu"])), x["latitude"], x["longitude"],
                               datetime.datetime.strptime(x["date"], '%Y-%m-%d').strftime("%Y-%m-%d %H:%M:%S")])
 
     backend_data = list(de_collection.find())
