@@ -151,7 +151,7 @@ def get_infections():
                               "%Y-%m-%d %H:%M:%S")])
     backend_data = list(ch_collection.find())
     for x in backend_data:
-        rows_data.append([x["cases"], x["geo_coordinates_2d"][0], x["geo_coordinates_2d"][1],
+        rows_data.append([x["cases"], x["latitude"], x["longitude"],
                           datetime.datetime.strptime(x["date"], '%Y-%m-%d').strftime("%Y-%m-%d %H:%M:%S")])
 
     backend_data = list(de_collection.find())

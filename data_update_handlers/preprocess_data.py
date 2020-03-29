@@ -74,13 +74,15 @@ class DataPreprocessor:
     @staticmethod
     def preprocess_swiss_data(df):
         # split geo cordinates in columns longitude and latitude
-        df[['longitude', 'latitude']] = pd.DataFrame(df.geo_coordinates_2d.values.tolist(), index=df.index)
+        df[['latitude', 'longitude']] = pd.DataFrame(df.geo_coordinates_2d.values.tolist(), index=df.index)
 
         # calculate case per 100k
         df['cases_per_100k'] = df['cases']*df['Population']/100000
         df['deaths_per_100k'] = df['fatalities']*df['Population']/100000
 
+        df = df.rename(columns={'Population': 'population'})
+
         # remove unused columns and new order
-        df = df[["canton", "cases", "date", "fatalities", "latitude", "longitude", "Population", "cases_per_100k", "deaths_per_100k", "hospitalized", "icu", "released"]]
+        df = df[["canton", "cases", "date", "fatalities", "latitude", "longitude", "population", "cases_per_100k", "deaths_per_100k", "hospitalized", "icu", "released"]]
 
         return df
