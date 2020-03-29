@@ -26,3 +26,13 @@
 
 document.getElementById("btnAbsolute").classList.toggle('btn-dark');
 //refreshMap(document.getElementById("rangeDays").value, document.getElementById("socialDistancing").checked ? 1 : 0);
+
+function drawPointLayer() 
+{
+    var dataOfTheDay = _apiData['day-2020-03-27'];
+    $(dataOfTheDay).each(function(i, obj) {
+        L.circle([obj.lat, obj.lng], 5000).addTo(map);
+        
+    });
+    
+}

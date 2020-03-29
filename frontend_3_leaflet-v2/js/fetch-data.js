@@ -31,7 +31,7 @@ function processData(data) {
         } else {
             _apiData['day-'+rowData.day].push(rowData);
         }
-        
+        drawPointLayer();
     });
-    console.log(_apiData);
+    
 }
