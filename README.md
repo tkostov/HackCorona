@@ -1,4 +1,4 @@
-#HackCorona Team @ [WirVsCorona Hackathon](https://wirvsvirushackathon.org)
+#HackCorona Team @ [WirVsCorona Hackathon](https://wirvsvirushackathon.org) & [#CodeVsCOVID19](https://www.codevscovid19.org)
 
 [Live demo](http://track-the-virus-v3.s3-website.eu-central-1.amazonaws.com)
 
