@@ -11,7 +11,7 @@ const customizedKeplerGlReducer = keplerGlReducer
     .initialState({
         uiState: {
             // hide side panel to disallow user customize the map
-            readOnly: true,
+            readOnly: false,
 
             // customize which map control button to show
 //      mapControls: {
