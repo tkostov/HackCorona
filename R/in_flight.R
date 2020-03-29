@@ -1,36 +1,38 @@
-## ----get-data,include=FALSE----------------------------------------------
-#read_csv("https://kingaa.github.io/sbied/ebola/ebola_data.csv") -> dat
+#TODO data to be put by the python script
+horizon <- 13;
+fit_horizon <- 15;
+is_fit <- 1; # Get from 
+
+region_id = 123;
+library(pomp);
+library(tidyverse);
+library(foreach);
+library(doParallel);
+library(iterators);
+library(doRNG);
+registerDoParallel();
+registerDoRNG(887851050L);
+
+
+populations <- c(region=10628972);
+
+
+read_csv("https://kingaa.github.io/sbied/ebola/ebola_data.csv") -> dat
 
 dat
-dat = dat[dat$country == 'Guinea',]
-## ----popsizes,include=FALSE----------------------------------------------
 
-
-
-estimator.init <- function(){
-  options(
-    keep.source=TRUE,
-    stringsAsFactors=FALSE,
-    encoding="UTF-8"
-  )
-  set.seed(594709947L)
-  library(tidyverse)
-  theme_set(theme_bw())
-  library(pomp)
-  stopifnot(packageVersion("pomp")>="2.1")
-  library(tidyverse)
-}
-
-
-
-estimator.fit <-function(dat, model_id_str, population){
-  # TODO Add the fit procedure here
-  # dat columns are : | day_id | model_str_id | reported cases |
-  estimator.population <- c(population = population)
-}
+set.seed(594709947L)
+library(tidyverse)
+library(pomp)
+stopifnot(packageVersion("pomp")>="2.1")
+options(
+  keep.source=TRUE,
+  stringsAsFactors=FALSE,
+  encoding="UTF-8"
+)
 
 ## ----rproc,include=FALSE-------------------------------------------------
-estimator.rSim <- Csnippet("
+rSim <- Csnippet("
   double lambda, beta;
   double *E = &E1;
   beta = R0 * gamma; // Transmission rate
@@ -60,7 +62,7 @@ estimator.rSim <- Csnippet("
   N_IR += transI; // No of transitions from I to R
 ")
 
-estimator.rInit <- Csnippet("
+rInit <- Csnippet("
   double m = N/(S_0+E_0+I_0+R_0);
   double *E = &E1;
   int j;
@@ -73,7 +75,7 @@ estimator.rInit <- Csnippet("
 ")
 
 ## ----skel,include=FALSE--------------------------------------------------
-estimator.skel <- Csnippet("
+skel <- Csnippet("
   double lambda, beta;
   const double *E = &E1;
   double *DE = &DE1;
@@ -92,9 +94,8 @@ estimator.skel <- Csnippet("
   DN_IR = gamma * I;
 ")
 
-
 ## ----measmodel,include=FALSE---------------------------------------------
-estimator.dObs <- Csnippet("
+dObs <- Csnippet("
   double f;
   if (k > 0.0)
     f = dnbinom_mu(nearbyint(cases),1.0/k,rho*N_EI,1);
@@ -103,148 +104,61 @@ estimator.dObs <- Csnippet("
   lik = (give_log) ? f : exp(f);
 ")
 
-estimator.rObs <- Csnippet("
+rObs <- Csnippet("
   if (k > 0) {
     cases = rnbinom_mu(1.0/k,rho*N_EI);
   } else {
     cases = rpois(rho*N_EI);
   }")
 
-estimator.forecast <- function(n_days_ahead, model_id_str){
-  #TODO add code here
+## ----pomp-construction,include=FALSE-------------------------------------
+covidModel <- function (country=c("region"),
+                        timestep = 0.1, nstageE = 3) {
+  
+  ctry <- match.arg(country)
+  pop <- unname(populations[ctry])
+  nstageE <- as.integer(nstageE)
+  
+  globs <- paste0("static int nstageE = ",nstageE,";")
+  
+  dat <- subset(dat,country==ctry,select=-country)
+  
+  ## Create the pomp object
+  dat %>%
+    select(week,cases) %>%
+    pomp(
+      times="week",
+      t0=min(dat$week)-1,
+      globals=globs,
+      accumvars=c("N_EI","N_IR"),
+      statenames=c("S",sprintf("E%1d",seq_len(nstageE)),
+                   "I","R","N_EI","N_IR"),
+      paramnames=c("N","R0","alpha","gamma","rho","k",
+                   "S_0","E_0","I_0","R_0"),
+      dmeasure=dObs, rmeasure=rObs,
+      rprocess=discrete_time(step.fun=rSim, delta.t=timestep),
+      skeleton=vectorfield(skel),
+      partrans=parameter_trans(
+        log=c("R0","k"),logit="rho",
+        barycentric=c("S_0","E_0","I_0","R_0")),
+      rinit=rInit
+    ) -> po
 }
 
-estimator.second_init<- function(area_code){
-  ## ----pomp-construction,include=FALSE-------------------------------------
-  covidModel <- function (country=c(area_code),
-                               timestep = 0.1, nstageE = 3) {
-    
-    ctry <- match.arg(country)
-    pop <- unname(populations[ctry])
-    nstageE <- as.integer(nstageE)
-    globs <- paste0("static int nstageE = ",nstageE,";")
-    dat <- subset(dat,country==ctry,select=-country)
-    
-    ## Create the pomp object
-    dat %>%
-      select(day,cases) %>%
-      pomp(
-        times="week",
-        t0=min(dat$week)-1,
-        globals=globs,
-        accumvars=c("N_EI","N_IR"),
-        statenames=c("S",sprintf("E%1d",seq_len(nstageE)),
-                     "I","R","N_EI","N_IR"),
-        paramnames=c("N","R0","alpha","gamma","rho","k",
-                     "S_0","E_0","I_0","R_0"),
-        dmeasure=estimator.dObs, rmeasure=estimator.rObs,
-        rprocess=discrete_time(step.fun=rSim, delta.t=timestep),
-        skeleton=vectorfield(estimator.skel),
-        partrans=parameter_trans(
-          log=c("R0","k"),logit="rho",
-          barycentric=c("S_0","E_0","I_0","R_0")),
-        rinit=rInit
-      ) -> po
-  estimator.model <- covidModel("Guinea")
-  }
-
-estimator.init()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# ebolaModel("SierraLeone") -> sle
-# ebolaModel("Liberia") -> lbr
+covidModel("region") -> region_model
 
 ## ----load-profile,echo=FALSE---------------------------------------------
-options(stringsAsFactors=FALSE)
-read_csv("https://kingaa.github.io/sbied/ebola/ebola-profiles.csv") -> profs
+# options(stringsAsFactors=FALSE)
+# read_csv("https://kingaa.github.io/sbied/ebola/ebola-profiles.csv") -> profs
 
-## ----profiles-plots,results='hide',echo=FALSE----------------------------
-
-theme_set(theme_bw())
-
-
-
-## ----diagnostics1,echo=FALSE---------------------------------------------
-library(pomp)
-library(tidyverse)
-options(stringsAsFactors=FALSE)
-
-profs %>%
-  filter(country=="Guinea") %>%
-  filter(loglik==max(loglik)) %>%
-  select(-loglik,-loglik.se,-country,-profile) -> coef(gin)
-
-gin %>%
-  simulate(nsim=20,format="data.frame",include.data=TRUE) %>%
-  mutate(
-    date=min(dat$date)+7*(week-1),
-    is.data=ifelse(.id=="data","yes","no")
-  ) %>%
-  ggplot(aes(x=date,y=cases,group=.id,color=is.data,alpha=is.data))+
-  geom_line()+
-  guides(color=FALSE,alpha=FALSE)+
-  scale_color_manual(values=c(no=gray(0.6),yes='red'))+
-  scale_alpha_manual(values=c(no=0.5,yes=1))
-
-## ----diagnostics-growth-rate---------------------------------------------
-growth.rate <- function (y) {
-  cases <- y["cases",]
-  fit <- lm(log1p(cases)~seq_along(cases))
-  unname(coef(fit)[2])
-}
-
-gin %>%
-  probe(probes=list(r=growth.rate),nsim=500) %>%
-  plot()
-
-## ----diagnostics-growth-rate-and-sd--------------------------------------
-growth.rate.plus <- function (y) {
-  cases <- y["cases",]
-  fit <- lm(log1p(cases)~seq_along(cases))
-  c(r=unname(coef(fit)[2]),sd=sd(residuals(fit)))
-}
-
-gin %>%
-  probe(probes=list(growth.rate.plus),nsim=500) %>%
-  plot()
-
-## ----diagnostics2,fig.height=6-------------------------------------------
-log1p.detrend <- function (y) {
-  cases <- y["cases",]
-  y["cases",] <- as.numeric(residuals(lm(log1p(cases)~seq_along(cases))))
-  y
-}
-
-gin %>%
-  probe(nsim=500,
-        probes=list(
-          growth.rate.plus,
-          probe.quantile(var="cases",prob=c(0.25,0.75)),
-          probe.acf(var="cases",lags=c(1,2,3),type="correlation",
-                    transform=log1p.detrend))) %>%
-  plot()
 
 ## ----forecasts1----------------------------------------------------------
-library(pomp)
-library(tidyverse)
-options(stringsAsFactors=FALSE)
 
+options(stringsAsFactors=FALSE)
 set.seed(988077383L)
 
 ## forecast horizon
-horizon <- 13
+
 
 ## Weighted quantile function
 wquant <- function (x, weights, probs = c(0.025,0.5,0.975)) {
@@ -273,14 +187,10 @@ sobolDesign(lower=ranges[,'min'],
             nseq=20) -> params
 plot(params)
 
-## ----forecasts2----------------------------------------------------------
-library(foreach)
-library(doParallel)
-library(iterators)
-library(doRNG)
 
-registerDoParallel()
-registerDoRNG(887851050L)
+
+## ----forecasts2----------------------------------------------------------
+
 
 foreach(p=iter(params,by='row'),
         .inorder=FALSE,
