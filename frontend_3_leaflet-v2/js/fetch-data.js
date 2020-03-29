@@ -2,7 +2,11 @@ function fetchAndProcessData() {
     $.ajax({
         url: 'http://ec2-3-122-224-7.eu-central-1.compute.amazonaws.com:8080/ch_infections',
         type: 'GET',
+<<<<<<< HEAD
         dataType: 'json',
+=======
+
+>>>>>>> 50a43fc94892e50787aa2aee6f9178a5a12912fb
         data: {
             format: 'json'
         },
@@ -16,6 +20,7 @@ function fetchAndProcessData() {
 }
 
 function processData(data) {
+<<<<<<< HEAD
     _apiData = data.rows;
     $(data.rows).each(function(i, obj) {
         rowData = {
@@ -34,4 +39,7 @@ function processData(data) {
         drawPointLayer();
     });
     
+=======
+    console.log(data);
+>>>>>>> 50a43fc94892e50787aa2aee6f9178a5a12912fb
 }
