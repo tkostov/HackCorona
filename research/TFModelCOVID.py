@@ -497,7 +497,7 @@ def newTime(State, Par):
     this is the most important function of the model. It contains all the mathematics to advance by one timestep.
     """
     # first determid the various transfer rates (e.g. also stuff to put into the queues)
-    if True:
+    if True:  # assumption: PPL only mix in the same district!
         # all infected ppl matter, no matter which age group. The sum results in a scalar!
         infections = (State.S * tf.reduce_sum(State.I * Par.ii + State.Q * Par.iq + State.H * Par.ih, [0, 2], keepdims=True));
     else:

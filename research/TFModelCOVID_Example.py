@@ -70,7 +70,7 @@ NumAge = LKPopulation.shape[-1]  # represents the age groups according to the RK
 # Define the starting population of ill ppl.
 I0 = tf.constant(np.zeros(NumTimes, covid.CalcFloatStr));  # make the time line for infected ppl (dependent on day of desease)
 # I0Var = tf.Variable(initial_value=LKPopulation*0.0+0.001, name='I0Var')  # start with one in every age group and district
-StartI0 = 5  # 15.6 / 4.0
+StartI0 = 2  # 15.6 / 4.0
 if True:
     if False:
         I0Var = tf.Variable(initial_value=StartI0, dtype=covid.CalcFloatStr, name='I0Var')  # start with one in every age group and district
@@ -81,12 +81,12 @@ else:
     I0Var = StartI0
 # I0Var = tf.ones(LKPopulation.shape, covid.CalcFloatStr) * 10 * ScalarI0
 
-LKScalingFactor = TPop / np.sum(np.array(LKPopulation),-1,keepdims=True)
+LKScalingFactor = TPop / np.sum(np.array(LKPopulation), -1, keepdims=True)
 # This factor accounts for the effect of dividing a country in parts.
 # 2nd order rates have to be multiplied with it
 
-Infected = I0Var
-  # 10 infected of one age group to start with
+Infected = I0Var / NumLK
+# 10 infected of one age group to start with
 I0, tmp = covid.advanceQueue(I0, Infected / TPop)  # start with some infections
 
 S0 = (LKPopulation - Infected) / TPop;  # no time line here!
@@ -123,7 +123,7 @@ else:
 ChanceHospital = TotalRateToHospital * covid.sigmoid(NumAge, DangerPoint, DangerSpread)  # Age-dependent chance to die in intensive care
 
 # -----
-StartInfectionRate = 2.47  # 2.17 # 1.416  # 1.416 # 60
+StartInfectionRate = 4.29  # 2.17 # 1.416  # 1.416 # 60
 if True:  # global fit for infections
     InfectionRateTotal = tf.Variable(initial_value=StartInfectionRate, name='InfectionRateTotal', dtype=covid.CalcFloatStr)  # float(0.15/TPop)
 else:
@@ -147,10 +147,10 @@ ChanceToDetect = DetectionRateTotal * covid.gaussian(TimeOnly, MeanDetectionDate
 
 Par = covid.cPar(
     q=float(0.0),  # quarantined. Will be replaced by the quantineTrace information!
-    ii=ChanceInfection * LKScalingFactor,  # chance/day to become infected by an infected person
-    # ii=float(2.88), # chance/day to become infected by an infected person
-    iq=float(0.0000) * LKScalingFactor,  # chance/day to become infected by a reported quarantined
-    ih=float(0.0000) * LKScalingFactor,  # chance/day to become infected while visiting the hospital
+    ii=ChanceInfection*LKScalingFactor,  # (disease-progression-dependent) chance/day to become infected by an infected person
+    # ii=float(2.88)*LKScalingFactor, # chance/day to become infected by an infected person
+    iq=float(0.0000)*LKScalingFactor,  # chance/day to become infected by a reported quarantined
+    ih=float(0.0000)*LKScalingFactor,  # chance/day to become infected while visiting the hospital
     d=ChanceToDetect,  # chance/day to detect an infected person
     h=ChanceHospital,  # chance/day to become ill and go to the hospital (should be desease-day dependent!)
     hic=ChanceICU,  # chance to become severely ill needing intensive care
@@ -180,7 +180,7 @@ covid.showStates(allRes, Par, name='InitStates', noS=True, Population=TPop)
 # loss = Loss_Poisson2(reported[0:LKReported.shape[0]], LKReported, Bg=0.1)
 loss = covid.Loss_FixedGaussian(reported[0:LKReported.shape[0]], LKReported)
 # toOptimize=[I0Var,InfectionRateTotal]
-opt = covid.optimizer(loss, otype="L-BFGS-B", NIter=50)  # var_list=toOptimize
+opt = covid.optimizer(loss, otype="L-BFGS-B", NIter=100)  # var_list=toOptimize
 # opt = covid.optimizer(loss, otype="adam", oparam={"learning_rate": 0.0001}, NIter=100)
 res = covid.Optimize(opt, loss=loss, resVars=list(allRes) + allVars + [reported])
 
