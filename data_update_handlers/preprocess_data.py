@@ -15,7 +15,8 @@ class DataPreprocessor:
         })
         df["latitude"] = [x[0] for x in df["geo_point_2d"].values]
         df["longitude"] = [x[1] for x in df["geo_point_2d"].values]
-        df = df.groupby(['IdLandkreis', 'date']).agg({"cases": np.sum, "fatalities": np.sum, "latitude": np.mean, "longitude": np.mean, "population": np.mean})
+        df = df.groupby(['IdLandkreis', 'date']).agg({"cases": np.sum, "fatalities": np.sum, "latitude": np.mean, "longitude": np.mean, "population": np.mean, "icu":
+                                                      np.mean, "beds": np.mean})
         df.reset_index(inplace=True)
         df.sort_values(by=["IdLandkreis", "date"], inplace=True)
         df["date"] = [datetime.datetime.utcfromtimestamp(int(x)/1000).strftime('%Y-%m-%d %H:%M:%S') for x in df["date"].values]
@@ -32,7 +33,7 @@ class DataPreprocessor:
                         values_to_add.append({
                             "IdLandkreis": row["IdLandkreis"], "date": (last_date + datetime.timedelta(days=i)).strftime('%Y-%m-%d %H:%M:%S'),
                             "cases": last_cases, "fatalities": last_fatalities, "latitude": row["latitude"], "longitude": row["longitude"],
-                            "population": row["population"]
+                            "population": row["population"], "icu": row["icu"], "beds": row["beds"]
                         })
                 df.loc[df.index[index], "cases"] += int(last_cases)
                 df.loc[df.index[index], "fatalities"] += int(last_fatalities)
@@ -45,7 +46,8 @@ class DataPreprocessor:
                             "date": (last_date + datetime.timedelta(days=i+1)).strftime('%Y-%m-%d %H:%M:%S'),
                             "cases": last_cases, "fatalities": last_fatalities, "latitude": df.loc[df.index[index-1], "latitude"],
                             "longitude": df.loc[df.index[index-1], "longitude"],
-                            "population": df.loc[df.index[index-1], "population"]
+                            "population": df.loc[df.index[index-1], "population"], "icu": df.loc[df.index[index-1], "icu"],
+                            "beds": df.loc[df.index[index - 1], "beds"]
                         })
             last_id = row["IdLandkreis"]
             last_cases = df.loc[df.index[index], "cases"]
@@ -55,15 +57,12 @@ class DataPreprocessor:
         df.sort_values(by=["IdLandkreis", "date"], inplace=True)
         df["cases_per_100k"] = 1e5 * df["cases"] / df["population"]
         df["deaths_per_100k"] = 1e5 * df["fatalities"] / df["population"]
-        df["hospitalized"] = 0
-        df["icu"] = 0
-        df["recovered"] = 0
 
         df = df.rename(columns={'IdLandkreis': 'region'})
 
         df['country'] = "DE"
 
-        df = df[["country", "region", "cases", "date", "fatalities", "latitude", "longitude", "population", "cases_per_100k", "deaths_per_100k", "hospitalized", "icu", "recovered"]]
+        df = df[["country", "region", "cases", "date", "fatalities", "latitude", "longitude", "population", "cases_per_100k", "deaths_per_100k", "icu", "beds"]]
 
         return df
 
