@@ -1,5 +1,5 @@
 import pandas as pd
-from datetime import date, timedelta, datetime
+from datetime import date, timedelta
 from dotenv import load_dotenv
 import json
 import urllib
@@ -9,11 +9,13 @@ from configparser import ConfigParser
 def get_date_range(dfs):
     min_dates = []
     for _, df in dfs.items():
-        min_dates.append(datetime.strptime(df.index.values.min(), '%Y-%m-%d'))
+        min_dates.append(date.fromisoformat(df.index.values.min()))
     min_date = min(min_dates)
+
     dates = []
-    for i in range((date.today() - min_date.date()).days + 1):
+    for i in range((date.today() - min_date).days + 1):
         dates.append((min_date + timedelta(days=i)).isoformat())
+
     return dates
 
 
@@ -62,8 +64,6 @@ class DataFetcher:
         # Append empty dates to all
         dates = get_date_range(dfs)
 
-
-
         df_cases = pd.DataFrame(float("nan"), index=dates, columns=cantons)
         df_fatalities = pd.DataFrame(float("nan"), index=dates, columns=cantons)
         df_hospitalized = pd.DataFrame(float("nan"), index=dates, columns=cantons)
@@ -73,9 +73,7 @@ class DataFetcher:
 
         for canton, df in dfs.items():
             for d in dates:
-                d = d.replace('T',' ')
-                datetime_d = datetime.datetime.strptime(d,"%Y-%m-%d %H:%M:%S")
-                if datetime_d.strftime("%Y-%m-%d") in df.index:
+                if d in df.index:
                     df_cases[canton][d] = df["ncumul_conf"][d]
                     df_fatalities[canton][d] = df["ncumul_deceased"][d]
                     df_hospitalized[canton][d] = df["ncumul_hosp"][d]
@@ -84,12 +82,6 @@ class DataFetcher:
                     df_released[canton][d] = df["ncumul_released"][d]
 
         # Fill to calculate the correct totals for CH
-        df_cases_total = df_cases.fillna(method="ffill")
-        df_fatalities_total = df_fatalities.fillna(method="ffill")
-        df_hospitalized_total = df_hospitalized.fillna(method="ffill")
-        df_icu_total = df_icu.fillna(method="ffill")
-        df_vent_total = df_vent.fillna(method="ffill")
-        df_released_total = df_released.fillna(method="ffill")
         cantons = df_cases.columns
 
         canton_geo = {
