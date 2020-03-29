@@ -90,7 +90,7 @@ class DataPreprocessor:
         df = df.rename(columns={'canton': 'region'})
 
         # split geo cordinates in columns longitude and latitude
-        df[['longitude', 'latitude']] = pd.DataFrame(df.geo_coordinates_2d.values.tolist(), index=df.index)
+        df[['latitude', 'longitude']] = pd.DataFrame(df.geo_coordinates_2d.values.tolist(), index=df.index)
 
         # calculate case per 100k
         df['cases_per_100k'] = df['cases']*df['population']/100000

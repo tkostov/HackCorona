@@ -102,7 +102,7 @@ def get_ch_infections():
     rows_data = []
     backend_data = list(lk_aggregated_collection.find())
     for x in backend_data:
-        rows_data.append([x["cases"], x["geo_coordinates_2d"][0], x["geo_coordinates_2d"][1], datetime.datetime.strptime(x["date"], '%Y-%m-%d').strftime("%Y-%m-%d %H:%M:%S")])
+        rows_data.append([x["cases"], x["latitude"], x["longitude"], datetime.datetime.strptime(x["date"], '%Y-%m-%d').strftime("%Y-%m-%d %H:%M:%S")])
     json_data["rows"] = rows_data
     return dumps(json_data), 200
 
@@ -151,7 +151,7 @@ def get_infections():
                               "%Y-%m-%d %H:%M:%S")])
     backend_data = list(ch_collection.find())
     for x in backend_data:
-        rows_data.append([x["cases"], x["geo_coordinates_2d"][0], x["geo_coordinates_2d"][1],
+        rows_data.append([x["cases"], x["latitude"], x["longitude"],
                           datetime.datetime.strptime(x["date"], '%Y-%m-%d').strftime("%Y-%m-%d %H:%M:%S")])
 
     backend_data = list(de_collection.find())
