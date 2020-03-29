@@ -2,18 +2,22 @@ import datetime
 from flask import Flask, request
 from flask_cors import CORS
 from bson.json_util import dumps
+from math import sqrt
 import os
 import pandas as pd
 from pymongo import MongoClient
+
 app = Flask(__name__)
 CORS(app)
 
 import sys
+
 sys.path.append('..')
 from research.fit_model import get_predictions
 
 # load environment variables
 from dotenv import load_dotenv
+
 load_dotenv()
 
 
@@ -80,12 +84,15 @@ def get_lk_all():
     db = client[os.getenv("MAIN_DB")]
     lk_aggregated_collection = db["lk_aggregated"]
     json_data = {"fields": [{"name": "density", "format": "", "type": "integer"},
-                {"name": "latitude", "format": "", "type": "real"}, {"name": "longitude", "format": "", "type": "real"},
-                {"name": "day", "format":"YYYY-M-D H:m:s", "type": "timestamp"}]}
+                            {"name": "latitude", "format": "", "type": "real"},
+                            {"name": "longitude", "format": "", "type": "real"},
+                            {"name": "day", "format": "YYYY-M-D H:m:s", "type": "timestamp"}]}
     rows_data = []
     backend_data = list(lk_aggregated_collection.find())
     for x in backend_data:
-        rows_data.append([x["AnzahlFall"], x["geo_point_2d"][0], x["geo_point_2d"][1], (datetime.datetime.now() + datetime.timedelta(days=x["TageInZukunft"])).strftime("%Y-%m-%d %H:%M:%S")])
+        rows_data.append([x["AnzahlFall"], x["geo_point_2d"][0], x["geo_point_2d"][1],
+                          (datetime.datetime.now() + datetime.timedelta(days=x["TageInZukunft"])).strftime(
+                              "%Y-%m-%d %H:%M:%S")])
     json_data["rows"] = rows_data
     return dumps(json_data), 200
 
@@ -102,7 +109,8 @@ def get_ch_infections():
     rows_data = []
     backend_data = list(lk_aggregated_collection.find())
     for x in backend_data:
-        rows_data.append([x["cases"], x["latitude"], x["longitude"], datetime.datetime.strptime(x["date"], '%Y-%m-%d').strftime("%Y-%m-%d %H:%M:%S")])
+        rows_data.append([x["cases"], x["latitude"], x["longitude"],
+                          datetime.datetime.strptime(x["date"], '%Y-%m-%d').strftime("%Y-%m-%d %H:%M:%S")])
     json_data["rows"] = rows_data
     return dumps(json_data), 200
 
@@ -119,7 +127,9 @@ def get_it_infections():
     rows_data = []
     backend_data = list(lk_aggregated_collection.find())
     for x in backend_data:
-        rows_data.append([x["cases"], x["lat"], x["long"], datetime.datetime.strptime(x["data"].replace("T", " "), '%Y-%m-%d %H:%M:%S').strftime("%Y-%m-%d %H:%M:%S")])
+        rows_data.append([x["cases"], x["lat"], x["long"],
+                          datetime.datetime.strptime(x["data"].replace("T", " "), '%Y-%m-%d %H:%M:%S').strftime(
+                              "%Y-%m-%d %H:%M:%S")])
     json_data["rows"] = rows_data
     return dumps(json_data), 200
 
@@ -139,24 +149,65 @@ def get_infections():
     it_collection = db["it_data"]
     ch_collection = db["ch_data"]
     de_collection = db["de_data"]
-    json_data = {"fields": [{"name": "density", "format": "", "type": "integer"},
+    json_data = {"fields": [{"name": "cases", "format": "", "type": "integer"},
+                            {"name": "deaths", "format": "", "type": "integer"},
+                            {"name": "population", "format": "", "type": "integer"},
                             {"name": "latitude", "format": "", "type": "real"},
                             {"name": "longitude", "format": "", "type": "real"},
                             {"name": "day", "format": "YYYY-M-D H:m:s", "type": "timestamp"}]}
     rows_data = []
     backend_data = list(it_collection.find())
     for x in backend_data:
-        rows_data.append([x["cases"], x["lat"], x["long"],
-                          datetime.datetime.strptime(x["data"].replace("T", " "), '%Y-%m-%d %H:%M:%S').strftime(
+        rows_data.append([x["cases"], x["fatalities"], x["population"], x["latitude"], x["longitude"],
+                          datetime.datetime.strptime(x["date"].replace("T", " "), '%Y-%m-%d %H:%M:%S').strftime(
                               "%Y-%m-%d %H:%M:%S")])
     backend_data = list(ch_collection.find())
     for x in backend_data:
-        rows_data.append([x["cases"], x["latitude"], x["longitude"],
+        rows_data.append([x["cases"], x["deaths"], x["population"], x["latitude"], x["longitude"],
                           datetime.datetime.strptime(x["date"], '%Y-%m-%d').strftime("%Y-%m-%d %H:%M:%S")])
 
     backend_data = list(de_collection.find())
     for x in backend_data:
-        rows_data.append([x["cases"], x["lattitude"], x["longitude"], x["date"]])
+        rows_data.append([x["cases"], x["fatalities"], x["population"], x["latitude"], x["longitude"], x["date"]])
+
+    json_data["rows"] = rows_data
+    return dumps(json_data), 200
+
+
+@app.route("/infections_sqrt")
+def get_infections_sqrt_scaled():
+    client = MongoClient(f'mongodb://{os.getenv("USR_")}:{os.getenv("PWD_")}@{os.getenv("REMOTE_HOST")}:{os.getenv("REMOTE_PORT")}/{os.getenv("AUTH_DB")}')
+    db = client[os.getenv("MAIN_DB")]
+    it_collection = db["it_data"]
+    ch_collection = db["ch_data"]
+    de_collection = db["de_data"]
+    json_data = {"fields": [{"name": "cases", "format": "", "type": "integer"},
+                            {"name": "deaths", "format": "", "type": "integer"},
+                            {"name": "ICUs", "format": "", "type": "integer"},
+                            {"name": "latitude", "format": "", "type": "real"},
+                            {"name": "longitude", "format": "", "type": "real"},
+                            {"name": "day", "format": "YYYY-M-D H:m:s", "type": "timestamp"}]}
+    rows_data = []
+    backend_data = list(it_collection.find())
+    for x in backend_data:
+        if datetime.datetime.strptime(x["date"].replace("T", " "),
+                                      '%Y-%m-%d %H:%M:%S').month > 2 or datetime.datetime.strptime(
+                x["date"].replace("T", " "), '%Y-%m-%d %H:%M:%S').year > 2020:
+            rows_data.append([int(sqrt(x["cases"])), int(sqrt(x["fatalities"])), int(sqrt(x["icu"])), x["latitude"], x["longitude"],
+                              datetime.datetime.strptime(x["date"].replace("T", " "), '%Y-%m-%d %H:%M:%S').strftime(
+                                  "%Y-%m-%d %H:%M:%S")])
+    backend_data = list(ch_collection.find())
+    for x in backend_data:
+        if datetime.datetime.strptime(x["date"], '%Y-%m-%d').month > 1 or datetime.datetime.strptime(x["date"],
+                                                                                                              '%Y-%m-%d').year > 2020:
+            rows_data.append([int(sqrt(x["cases"])), int(sqrt(x["deaths"])), int(sqrt(x["icu"])), x["latitude"], x["longitude"],
+                              datetime.datetime.strptime(x["date"], '%Y-%m-%d').strftime("%Y-%m-%d %H:%M:%S")])
+
+    backend_data = list(de_collection.find())
+    for x in backend_data:
+        if datetime.datetime.strptime(x["date"], '%Y-%m-%d %H:%M:%S').month > 2 or datetime.datetime.strptime(x["date"],
+                                                                                                              '%Y-%m-%d %H:%M:%S').year > 2020:
+            rows_data.append([int(sqrt(x["cases"])), x["fatalities"], x["icu"], x["latitude"], x["longitude"], x["date"]])
 
     json_data["rows"] = rows_data
     return dumps(json_data), 200
@@ -230,6 +281,7 @@ def run_simulation():
                         "Ausgangssperre": 0 if factors[sd_i] == 1.0 else 100
                     }
                     lk_pre.insert_one(d)
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port="8080")
