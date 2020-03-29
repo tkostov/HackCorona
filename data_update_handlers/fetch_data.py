@@ -3,6 +3,7 @@ from datetime import date, timedelta
 from dotenv import load_dotenv
 import json
 import urllib
+import urllib.request
 from configparser import ConfigParser
 
 
