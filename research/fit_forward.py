@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 from research.json_to_pandas import DataLoader
 import pandas as pd
 import numpy as np
-
+from tqdm import tqdm
+import pickle as pkl
 
 def plot_discrepancy(model_prediction, model_prediction_time, actual_data, actual_data_time, title):
     plt.plot(model_prediction_time, model_prediction, '-')
@@ -23,16 +24,8 @@ def load_data():
     :return: Dataframe : Columns = landkreise, Index = Meldedatum, values : Anzahl gemeldete Fälle
     """
     dl = DataLoader()
-    data_dict = dl.process_data()
-    rk_ = data_dict["RKI_Data"]
-    rk_["Meldedatum"] = pd.to_datetime(rk_["Meldedatum"], unit="ms")
-    df = rk_.groupby(["IdLandkreis", "Meldedatum"]).aggregate(func="sum")[["AnzahlFall"]].reset_index()
-    df = df.pivot(values=["AnzahlFall"], index="Meldedatum", columns="IdLandkreis")
-    df.fillna(0, inplace=True)
-    for x in range(df.shape[1]):
-        df.iloc[:, x] = df.iloc[:, x].cumsum()
-    population = rk_.groupby(by='IdLandkreis').sum()["Bev Insgesamt"].to_dict()
-    return df, population
+    train_data = dl.get_new_data()
+    return train_data
 
 
 def squared_diffs(series1, series2):
@@ -96,21 +89,35 @@ def fit(actual_infected, population):
     return best_param, trimmed_day
 
 
-def get_predictions(social_distancing_params: list, days: int) -> np.array:
+def fit_get_predictions(social_distancing_params: list, days: int) -> np.array:
     """
     :param social_distancing_params: social distancing parameters in range [0, 1]
     :param days: How many days to predict into the future
     :return: Future predictions of fraction of infected people with shape: (Social Distancing Param, Day, Landkreis)
     """
+    all_training_dicts = load_data()
+    all_results_dicts = {}
+    for location_key in tqdm(all_training_dicts.keys()):
+        historical_data_lk =  all_training_dicts[location_key]["data_fit"]
+        population_lk = int(historical_data_lk["population"].values[0])
+        deaths = historical_data_lk["deaths"].values
 
-    historical_data_lk, population_lk = load_data()
-    lk_ids = [x[1] for x in historical_data_lk.columns]
-    history_days = historical_data_lk.shape[0]
-    predictions_lk = np.zeros(shape=(len(social_distancing_params), days, historical_data_lk.shape[1]))
-    infected_lk = historical_data_lk.values.T
 
-    for i, infected, lk_id in zip(range(len(infected_lk)), infected_lk, lk_ids):
-        population = population_lk[lk_id]
+        for x in historical_data_lk.columns:
+            if x not in ["day", "id"]:
+                historical_data_lk = historical_data_lk.astype({x : np.double})
+
+        # TODO ugly hack for prototype -> Change this to a more meaningull estimate of deaths
+        deaths_proportion = np.nan_to_num(historical_data_lk["deaths"]/historical_data_lk["cases"], 0)
+        deaths_proportion = np.nanmean(deaths_proportion)
+
+        lk_ids = [x[1] for x in historical_data_lk.columns]
+        history_days = historical_data_lk.shape[0]
+        predictions_lk = np.zeros(shape=(len(social_distancing_params), days, 1))
+        infected_lk = np.reshape(historical_data_lk["cases"].values, [-1,1])
+
+        infected = infected_lk
+        population = population_lk
         infected_normalized = infected / population
         best_param, trimmed_day = fit(infected_normalized, population)
         best_param.update_max_time(days - trimmed_day - 1 + history_days)
@@ -119,7 +126,16 @@ def get_predictions(social_distancing_params: list, days: int) -> np.array:
             best_param.social_distancing = social_distancing_param
             predictions = run(best_param)
             # only take future predictions
-            predictions_lk[j, :, i] = predictions[history_days - trimmed_day:]
+            predictions_lk[j, :, 0] = predictions[history_days - trimmed_day:]*population
+        predictions_lk = np.squeeze(predictions_lk)
+        for day_i in range(1, predictions_lk.shape[1]):
+            predictions_lk[:,day_i] += predictions_lk[:,day_i-1]
+        predictions_lk  += infected_lk[-1,0]
+        predictions_lk = predictions_lk.astype(np.int)
+        all_training_dicts[location_key]["forecast_infected"] = predictions_lk[0,:]
+        all_training_dicts[location_key]["forecast_deceased"] = (predictions_lk[0, :]*deaths_proportion).astype(np.int)
+    with open("forecasted_data.pkl", "wb") as f:
+        pkl.dump(all_training_dicts)
 
     return predictions_lk
 
@@ -140,7 +156,7 @@ def test_fitting():
 
 
 def test_predictions():
-    predictions = get_predictions([0.5, 0.7, 1.0], 200)
+    predictions = fit_get_predictions([0.5, 0.7, 1.0], 30)
     print('Done.')
 
 if __name__ == '__main__':
