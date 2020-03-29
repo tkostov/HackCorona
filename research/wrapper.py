@@ -1,6 +1,9 @@
 import pandas as pd
+import rpy2.robjects as ro
 from rpy2.robjects import r, pandas2ri
 from json_to_pandas import DataLoader
+
+from rpy2.robjects.conversion import localconverter
 
 # Columns with translations to avoid headaches:
 
@@ -36,7 +39,7 @@ data_dict = dl.process_data()  # loads and forms the data dictionary
 rki_data = data_dict["RKI_Data"]  # only RKI dataframe
 #print(rki_data.head())
 
-# formatted will contain the data adapted for the R code 
+# formatted will contain the data adapted for the R code
 # Extract relevant columns
 formatted = rki_data[["Meldedatum", "Bundesland", "AnzahlFall"]]
 
@@ -55,8 +58,8 @@ formatted.rename(columns={
 formatted["date"] = pd.to_datetime(formatted["date"], unit="ms")
 
 # convert to R object
-pandas2ri.activate()
-dat = pandas2ri.py2ri(formatted)
+with localconverter(ro.default_converter + pandas2ri.converter):
+    dat = ro.conversion.py2rpy(formatted)
 
 # Example:
 from rpy2.robjects.packages import importr
