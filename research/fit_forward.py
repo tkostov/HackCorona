@@ -135,7 +135,7 @@ def fit_get_predictions(social_distancing_params: list, days: int) -> np.array:
         all_training_dicts[location_key]["forecast_infected"] = predictions_lk[0,:]
         all_training_dicts[location_key]["forecast_deceased"] = (predictions_lk[0, :]*deaths_proportion).astype(np.int)
     with open("forecasted_data.pkl", "wb") as f:
-        pkl.dump(all_training_dicts)
+        pkl.dump(all_training_dicts, f)
 
     return predictions_lk
 
