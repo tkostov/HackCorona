@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Track The Virus Simulator</title>
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" type="image/x-icon" href="images/favicon.ico">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+      integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <div class="container-fluid h-100">
+      <div class="row h-100">
+        <div class="col-md-3">
+          <div class="row">
+            <div class="col-md-12">
+              <h3 class = "main-header">COVID - 19 Simulation</h3>
+              <hr  class="separador"/>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <p>
+                Simulate the spread of the virus on its estimated progress.
+              </p>
+              <hr />
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <h4 class="settings-header">Settings</h4>
+            </div>
+          </div>
+          <hr />
+          <div class="row">
+            <div class="col-md-12">
+              <h4 class="settings-header">Legend</h4>
+              <div class="row descriptor">
+                <div class="col-md-3">
+                  <img src="images/hohe-ausbreitung.png" class="description-image" />
+                </div>
+                <div class="col-md-9">
+                  High spread
+                </div>
+              </div>
+              <div class="row descriptor">
+                <div class="col-md-3">
+                  <img src="images/maesige-ausbreitung.png" class="description-image" />
+                </div>
+                <div class="col-md-9">
+                  <p>Low spread</p>
+                </div>
+              </div>
+              <div class="row descriptor">
+                <div class="col-md-3">
+                  <img src="images/wenig-ausbreitung.png" class="description-image" />
+                </div>
+                <div class="col-md-9">
+                  <p>Little to no spread</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row align-to-bottom" style="display: none;">
+            <div class="col-md-12">
+              <div class="div-wrapper">
+                <img style="width:100%;" src="images/wirvsvirus.jpg" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-9" style="padding-left: 0px;padding-right: 0px;"><div id="map"></div></div>
+      </div>
+    </div>
+
+    <script src="js/events.js"></script>
+
+    <script src="temp-dist/leaflet-heat.js"></script>
+    <script src="data/points.js"></script>
+    <script src="js/heat-layer.js"></script>
+    <script src="js/show-from-api.js"></script>
+    <script src="js/paint-map.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/events.js"></script>
+    <link rel="shortcut icon" href="images/favicon.ico" />
+
+  </body>
+</html>
