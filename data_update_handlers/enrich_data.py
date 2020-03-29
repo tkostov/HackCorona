@@ -19,12 +19,12 @@ class DataEnricher:
 
     @staticmethod
     def enrich_italian_data(df):
+        italian_region_data = DataEnricher._load_italian_region_data()
+        df = pd.merge(df, italian_region_data, left_on='denominazione_regione', right_on='Regione')
         return df
 
     @staticmethod
     def enrich_swiss_data(df):
-        # load and merge demographic
-        # merge by canton
         swiss_region_data = DataEnricher._load_swiss_region_data()
         df = pd.merge(df, swiss_region_data, left_on='canton', right_on='Canton')
 
@@ -49,4 +49,9 @@ class DataEnricher:
     @staticmethod
     def _load_swiss_region_data():
         df = pd.read_csv("../covid19-cases-switzerland/demographics.csv")
+        return df
+
+    @staticmethod
+    def _load_italian_region_data():
+        df = pd.read_csv("../covid19-cases-italy/demographics.csv")
         return df

@@ -63,24 +63,42 @@ class DataPreprocessor:
     @staticmethod
     def preprocess_italian_data(df):
         df = df.rename(columns={'ricoverati_con_sintomi': 'hospitalized_with_symptoms', 'terapia_intensiva': 'icu',
-                                'totale_ospedalizzati': 'hospitalized_total',
+                                'totale_ospedalizzati': 'hospitalized',
                                 'isolamento_domiciliare': 'household quarantine',
                                 'totale_attualmente_positivi': 'total_actually_positive',
                                 'nuovi_attualmente_positivi': 'new_acutally_poitive', 'dimessi_guariti': 'recovered',
-                                'deceduti': 'deaths',
+                                'deceduti': 'fatalities', 'denominazione_regione': 'region', 'data': 'date', 'lat':'latitude',
+                                'long': 'longitude',
                                 'totale_casi': 'cases', 'tamponi': 'tested'})
+
+        df = df.rename(columns={'Popolazione': 'population'})
+        df = df.rename(columns={'Superficie': 'testregion'})
+
+        # calculate case per 100k
+        df['cases_per_100k'] = df['cases'] * df['population'] / 100000
+        df['deaths_per_100k'] = df['fatalities'] * df['population'] / 100000
+
+        df['country'] = "IT"
+
+        df = df[["country", "region", "cases", "date", "fatalities", "latitude", "longitude", "population", "cases_per_100k", "deaths_per_100k", "hospitalized", "icu", "recovered"]]
         return df
 
     @staticmethod
     def preprocess_swiss_data(df):
+        df = df.rename(columns={'released': 'recovered'})   # The description in the source tells, that it counts released and recovered patients. Thats why this is renamed to released
+        df = df.rename(columns={'Population': 'population'})
+        df = df.rename(columns={'canton': 'region'})
+
         # split geo cordinates in columns longitude and latitude
         df[['longitude', 'latitude']] = pd.DataFrame(df.geo_coordinates_2d.values.tolist(), index=df.index)
 
         # calculate case per 100k
-        df['cases_per_100k'] = df['cases']*df['Population']/100000
-        df['deaths_per_100k'] = df['fatalities']*df['Population']/100000
+        df['cases_per_100k'] = df['cases']*df['population']/100000
+        df['deaths_per_100k'] = df['fatalities']*df['population']/100000
 
-        # remove unused columns and new order
-        df = df[["canton", "cases", "date", "fatalities", "latitude", "longitude", "Population", "cases_per_100k", "deaths_per_100k", "hospitalized", "icu", "released"]]
+        df['country'] = "CH"
+
+        # remove unused columns and order according to the db standard
+        df = df[["country", "region", "cases", "date", "fatalities", "latitude", "longitude", "population", "cases_per_100k", "deaths_per_100k", "hospitalized", "icu", "recovered"]]
 
         return df
