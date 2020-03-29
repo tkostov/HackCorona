@@ -31,8 +31,31 @@ function drawPointLayer()
 {
     var dataOfTheDay = _apiData['day-2020-03-27'];
     $(dataOfTheDay).each(function(i, obj) {
-        L.circle([obj.lat, obj.lng], 5000).addTo(map);
+        circleColor = 'red';
+        L.circle([obj.lat, obj.lng], getRadius(obj.density), {color: circleColor, fillColor: '#ff7f5c', opacity: '0.5', fillOpacity: '0.5', weight: 1}).addTo(map);
         
     });
     
+}
+
+// TODO: do it dynamically based on the api data
+function getRadius(casesNum) {
+    circleRadius = 0;
+    
+    if (casesNum <= 10000) { circleRadius = 25000; }
+    if (casesNum <= 5000) { circleRadius = 20000; }
+    if (casesNum <= 2000) { circleRadius = 18000; }
+    if (casesNum <= 1000) { circleRadius = 15000; }
+    if (casesNum <= 500) { circleRadius = 12000; }
+    if (casesNum <= 200) { circleRadius = 10000; }
+    if (casesNum <= 100) { circleRadius = 7000; }
+    if (casesNum <= 50) { circleRadius = 4000; }
+    if (casesNum <= 20) { circleRadius = 2000; }
+    if (casesNum <= 10) { circleRadius = 1000; }
+    if (casesNum <= 5) { circleRadius = 700; }
+    if (casesNum <= 2) { circleRadius = 500; }
+
+    console.log(casesNum);
+    console.log(circleRadius);
+    return circleRadius;
 }
