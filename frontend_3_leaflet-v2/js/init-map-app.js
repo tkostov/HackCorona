@@ -21,8 +21,8 @@
   //   return [p[0], p[1]];
   // });
 
-  var heat = L.heatLayer([]).addTo(map);
+  //var heat = L.heatLayer([]).addTo(map);
 })('map', 7);
 
 document.getElementById("btnAbsolute").classList.toggle('btn-dark');
-refreshMap(document.getElementById("rangeDays").value, document.getElementById("socialDistancing").checked ? 1 : 0);
+//refreshMap(document.getElementById("rangeDays").value, document.getElementById("socialDistancing").checked ? 1 : 0);
