@@ -17,6 +17,8 @@ function fetchAndProcessData() {
 
 function processData(data) {
     _apiData = data.rows;
+    var lastDayKey = null;
+    
     $(data.rows).each(function(i, obj) {
         rowData = {
             'density': obj[0],
@@ -28,10 +30,13 @@ function processData(data) {
         if (!_apiData.hasOwnProperty('day-'+rowData.day)) {
             _apiData['day-'+rowData.day] = [];
             _apiData['day-'+rowData.day].push(rowData);
+            _daysArr.push('day-'+rowData.day);
         } else {
             _apiData['day-'+rowData.day].push(rowData);
         }
+        lastDayKey = 'day-'+rowData.day;
     });
-    drawPointLayer();
+    drawPointLayer(lastDayKey);
+    displayDaysInSidebar();
 
 }

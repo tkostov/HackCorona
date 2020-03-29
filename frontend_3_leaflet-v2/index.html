@@ -39,90 +39,24 @@
           </div>
           <div class="row">
             <div class="col-md-12">
-              <h4 class="settings-header">Settings</h4>
+              <h4 class="settings-header">Days</h4>
             </div>
           </div>
           <hr />
           <div class="row">
             <div class="col-md-12">
-                <div class="btn-group d-flex" role="group"a ria-label="Basic example">            
-                    <button id ="btnAbsolute" type="button" class="btn btn-secondary" v-on:click="heatmapFunctionAbsolute">Absolut</button>
-                    <button id ="btnPercentage" type=""button class="btn btn-secondary" v-on:click="heatmapFunctionPercentage">Prozentual</button>
-                </div>  
-            </div>
-          </div>
-          
-          <div class="row">
-            <div class="col-md-12">
-              <p class="descriptor">Bewege den Slider um die nächsten Tage zu simulieren.</p>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="slidecontainer">
-                <input
-                  type="range"
-                  min="0"
-                  max="30"
-                  value="0"
-                  class="slider"
-                  id="rangeDays"
-                />
-              </div>
-            </div>
-          </div>
-          <div class="row">
-                <div class="col-md-6"><p>Heute: <span id="date"></span></p></div>
-                <div class="col-md-6"><p>In <b><span id="additionalDays"></span></b> Tagen</p></div>
-              </div>
-          
-          <div class="row">
-            <div class="col-md-12">
-              <p>
-                Wähle folgende Optionen aus um die Ausbreitung zu verlangsamen.
-              </p>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-12">
-              <input
-                type="checkbox"
-                id="socialDistancing"
-              />
-              <label for="socialDistancing">Ausgangssperre Start heute</label>
+                <button class="btn button" type="button" id="play" style="background: grey;">Play</button>
             </div>
           </div>
           <hr />
-          
+          <span id="daysPanel" style="max-height: 20% !important; overflow: scroll; height: 13%; display: block;">
+          </span>
+          <hr />
           <div class="row">
             <div class="col-md-12">
-              <h4 class="settings-header">Legend</h4>
-              <div class="row descriptor">
-                <div class="col-md-3">
-                  <img src="images/hohe-ausbreitung.png" class="description-image" />
-                </div>
-                <div class="col-md-9">
-                  High spread
-                </div>
-              </div>
-              <div class="row descriptor">
-                <div class="col-md-3">
-                  <img src="images/maesige-ausbreitung.png" class="description-image" />
-                </div>
-                <div class="col-md-9">
-                  <p>Low spread</p>
-                </div>
-              </div>
-              <div class="row descriptor">
-                <div class="col-md-3">
-                  <img src="images/wenig-ausbreitung.png" class="description-image" />
-                </div>
-                <div class="col-md-9">
-                  <p>Little to no spread</p>
-                </div>
-              </div>
             </div>
           </div>
+          
           <div class="row align-to-bottom" style="display: none;">
             <div class="col-md-12">
               <div class="div-wrapper">
@@ -136,6 +70,7 @@
     </div>
 
     <script src="js/data-container.js"></script>
+    <script src="js/gui-elements.js"></script>
     <script src="js/init-map-app.js"></script>
     <script src="js/fetch-data.js"></script>
     <script src="js/events.js"></script>

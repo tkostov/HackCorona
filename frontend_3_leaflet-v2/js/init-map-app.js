@@ -24,18 +24,26 @@
   //var heat = L.heatLayer([]).addTo(map);
 })('map', 7);
 
-document.getElementById("btnAbsolute").classList.toggle('btn-dark');
+//document.getElementById("btnAbsolute").classList.toggle('btn-dark');
 //refreshMap(document.getElementById("rangeDays").value, document.getElementById("socialDistancing").checked ? 1 : 0);
 
-function drawPointLayer() 
+function drawPointLayer(dayKey) 
 {
-    var dataOfTheDay = _apiData['day-2020-03-27'];
+    var dataOfTheDay = _apiData[dayKey];
+    clearMap();
     $(dataOfTheDay).each(function(i, obj) {
         circleColor = 'red';
-        L.circle([obj.lat, obj.lng], getRadius(obj.density), {color: circleColor, fillColor: '#ff7f5c', opacity: '0.5', fillOpacity: '0.5', weight: 1}).addTo(map);
-        
+        var marker = L.circle([obj.lat, obj.lng], getRadius(obj.density), {color: circleColor, fillColor: '#ff7f5c', opacity: '0.5', fillOpacity: '0.5', weight: 1}).addTo(map);
+        _markersList.push(marker);
     });
     
+}
+
+function clearMap()
+{
+    $(_markersList).each(function(i, marker) {
+        map.removeLayer(marker);
+    });
 }
 
 // TODO: do it dynamically based on the api data
@@ -55,7 +63,31 @@ function getRadius(casesNum) {
     if (casesNum <= 5) { circleRadius = 700; }
     if (casesNum <= 2) { circleRadius = 500; }
 
-    console.log(casesNum);
-    console.log(circleRadius);
+    // console.log(casesNum);
+    // console.log(circleRadius);
     return circleRadius;
+}
+
+function displayDaysInSidebar() 
+{
+    $(_daysArr).each(function(i, obj) {
+        var day = obj.substr(4);
+        $('#daysPanel').append('<p data-value="'+day+'">Tag '+day+'</p><hr/>');
+    });
+    
+    // Attach click listeners to each day
+    $('#daysPanel p').each(function(i, obj) {
+        $(obj).click(function() {
+           showDataOfDay(this);
+        });
+    });
+    
+}
+
+function showDataOfDay(dayElement)
+{
+   console.log($(dayElement).attr('data-value'));
+    day = $(dayElement).attr('data-value');
+    dayKey = 'day-'+day;
+    drawPointLayer(dayKey);
 }
