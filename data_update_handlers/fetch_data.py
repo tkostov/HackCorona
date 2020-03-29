@@ -1,8 +1,20 @@
 import pandas as pd
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from dotenv import load_dotenv
 import json
 import urllib
+from configparser import ConfigParser
+
+
+def get_date_range(dfs):
+    min_dates = []
+    for _, df in dfs.items():
+        min_dates.append(datetime.strptime(df.index.values.min(), '%Y-%m-%d'))
+    min_date = min(min_dates)
+    dates = []
+    for i in range((date.today() - min_date.date()).days + 1):
+        dates.append((min_date + timedelta(days=i)).isoformat())
+    return dates
 
 
 class DataFetcher:
@@ -38,8 +50,8 @@ class DataFetcher:
     def fetch_swiss_data():
         load_dotenv()
         parser = ConfigParser()
-        parser.read("sources.ini")
-        cantons = list(map(str.upper, parser["cantonal"]))
+        parser.read("../covid19-cases-switzerland/sources.ini")
+        cantons = list(map(str.upper, parser['cantonal']))
 
         dfs = {}
         for canton in cantons:
@@ -50,6 +62,8 @@ class DataFetcher:
         # Append empty dates to all
         dates = get_date_range(dfs)
 
+
+
         df_cases = pd.DataFrame(float("nan"), index=dates, columns=cantons)
         df_fatalities = pd.DataFrame(float("nan"), index=dates, columns=cantons)
         df_hospitalized = pd.DataFrame(float("nan"), index=dates, columns=cantons)
@@ -59,7 +73,9 @@ class DataFetcher:
 
         for canton, df in dfs.items():
             for d in dates:
-                if d in df.index:
+                d = d.replace('T',' ')
+                datetime_d = datetime.datetime.strptime(d,"%Y-%m-%d %H:%M:%S")
+                if datetime_d.strftime("%Y-%m-%d") in df.index:
                     df_cases[canton][d] = df["ncumul_conf"][d]
                     df_fatalities[canton][d] = df["ncumul_deceased"][d]
                     df_hospitalized[canton][d] = df["ncumul_hosp"][d]
@@ -123,7 +139,6 @@ class DataFetcher:
 
         data = []
         for row_i in range(df_merged_temp.shape[0]):
-            print(row_i)
             row = df_merged_temp.iloc[row_i]
             for canton in cantons:
                 d = {"canton": canton}

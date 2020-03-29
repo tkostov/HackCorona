@@ -2,6 +2,7 @@ import json
 import pandas as pd
 import urllib
 
+
 class DataEnricher:
     @staticmethod
     def enrich_french_data(df):
@@ -24,6 +25,9 @@ class DataEnricher:
     def enrich_swiss_data(df):
         # load and merge demographic
         # merge by canton
+        swiss_region_data = DataEnricher._load_swiss_region_data()
+        df = pd.merge(df, swiss_region_data, left_on='canton', right_on='Canton')
+
         return df
 
     @staticmethod
@@ -41,3 +45,8 @@ class DataEnricher:
         data = pd.concat([pd.DataFrame(data), pd.DataFrame(list(data["fields"]))], axis=1).drop("fields", 1)
         data["cca_2"] = pd.to_numeric(data["cca_2"])
         return pd.DataFrame(data)
+
+    @staticmethod
+    def _load_swiss_region_data():
+        df = pd.read_csv("../covid19-cases-switzerland/demographics.csv")
+        return df

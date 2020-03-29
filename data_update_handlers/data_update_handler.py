@@ -3,6 +3,7 @@ from enrich_data import DataEnricher
 from fetch_data import DataFetcher
 from preprocess_data import DataPreprocessor
 
+
 class DataUpdateHandler:
     @staticmethod
     def _update_french_data():
@@ -39,5 +40,7 @@ class DataUpdateHandler:
         DataUpdateHandler._update_italian_data()
         DataUpdateHandler._update_swiss_data()
 
+
 if __name__ == "__main__":
-    DataUpdateHandler._update_german_data()
+    #DataUpdateHandler._update_german_data()
+    DataUpdateHandler._update_swiss_data()
