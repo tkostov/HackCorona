@@ -16,7 +16,8 @@ function handleDaysSlider(slider)
 function play() 
 {
     $('#daysPanel p').each(function(i, obj) {
-       showDataOfDay(this);
+       var handle = this; 
+       setTimeout(function() {showDataOfDay(handle)}, 1000);
        //sleep(1000);
     });
 }
