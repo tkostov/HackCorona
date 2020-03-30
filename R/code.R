@@ -1,4 +1,4 @@
-init <- function() {
+init <- function(dat_in) {
   ## ----prelims,include=FALSE,cache=FALSE-----------------------------------
   options(
     keep.source=TRUE,
@@ -12,21 +12,25 @@ init <- function() {
   library(pomp)
   stopifnot(packageVersion("pomp")>="2.1")
   
-  loadData()
+  loadData(dat_in)
   initCsnippets()
   initModel()
   loadProfiles()
 }
 
-run <- function() {
+run <- function(data_in) {
+  #print(data_in)
   #plotProfiles()
   #diagnostics()
-  forecasts()
+  res <- forecasts()
+  
+  return(res)
 }
 
-loadData <- function() {
+loadData <- function(dat_in) {
   ## ----get-data,include=FALSE----------------------------------------------
-  read_csv("https://kingaa.github.io/sbied/ebola/ebola_data.csv") ->> dat
+  #read_csv("https://kingaa.github.io/sbied/ebola/ebola_data.csv") ->> dat
+  dat_in ->> dat
   
   #dat
   
@@ -370,7 +374,7 @@ forecasts <- function() {
       upper=wquant(cases,weights=weight,probs=0.975)
     ) %>%
     ungroup() %>%
-    mutate(date=min(dat$date)+7*(week-1)) -> simq
+    mutate(date=min(dat$date)+7*(week-1)) ->> simq
   
   ## ----forecast-plots,echo=FALSE-------------------------------------------
   simq %>%
@@ -380,5 +384,7 @@ forecasts <- function() {
     geom_point(data=subset(dat,country=="SierraLeone"),
                mapping=aes(x=date,y=cases),color='black')+
     labs(y="cases")
+  
+  return(simq)
 }
 
