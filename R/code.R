@@ -122,40 +122,39 @@ initCsnippets <- function() {
 }
 
 ## ----pomp-construction,include=FALSE-------------------------------------
-initModel <- function() {
-  ebolaModel <- function (country=c("Guinea", "SierraLeone", "Liberia"),
-                          timestep = 0.1, nstageE = 3) {
-    
-    ctry <- match.arg(country)
-    pop <- unname(populations[ctry])
-    nstageE <- as.integer(nstageE)
-    
-    globs <- paste0("static int nstageE = ",nstageE,";")
-    
-    dat <- subset(dat,country==ctry,select=-country)
-    
-    ## Create the pomp object
-    dat %>%
-      select(week,cases) %>%
-      pomp(
-        times="week",
-        t0=min(dat$week)-1,
-        globals=globs,
-        accumvars=c("N_EI","N_IR"),
-        statenames=c("S",sprintf("E%1d",seq_len(nstageE)),
-                     "I","R","N_EI","N_IR"),
-        paramnames=c("N","R0","alpha","gamma","rho","k",
-                     "S_0","E_0","I_0","R_0"),
-        dmeasure=dObs, rmeasure=rObs,
-        rprocess=discrete_time(step.fun=rSim, delta.t=timestep),
-        skeleton=vectorfield(skel),
-        partrans=parameter_trans(
-          log=c("R0","k"),logit="rho",
-          barycentric=c("S_0","E_0","I_0","R_0")),
-        rinit=rInit
-      ) -> po
-  }
+ebolaModel <- function (country=c("Guinea", "SierraLeone", "Liberia"),
+                        timestep = 0.1, nstageE = 3) {
   
+  ctry <- match.arg(country)
+  pop <- unname(populations[ctry])
+  nstageE <- as.integer(nstageE)
+  
+  globs <- paste0("static int nstageE = ",nstageE,";")
+  
+  dat <- subset(dat,country==ctry,select=-country)
+  
+  ## Create the pomp object
+  dat %>%
+    select(week,cases) %>%
+    pomp(
+      times="week",
+      t0=min(dat$week)-1,
+      globals=globs,
+      accumvars=c("N_EI","N_IR"),
+      statenames=c("S",sprintf("E%1d",seq_len(nstageE)),
+                   "I","R","N_EI","N_IR"),
+      paramnames=c("N","R0","alpha","gamma","rho","k",
+                   "S_0","E_0","I_0","R_0"),
+      dmeasure=dObs, rmeasure=rObs,
+      rprocess=discrete_time(step.fun=rSim, delta.t=timestep),
+      skeleton=vectorfield(skel),
+      partrans=parameter_trans(
+        log=c("R0","k"),logit="rho",
+        barycentric=c("S_0","E_0","I_0","R_0")),
+      rinit=rInit
+    ) -> po
+}
+initModel <- function() {
   ebolaModel("Guinea") ->> gin
   ebolaModel("SierraLeone") ->> sle
   ebolaModel("Liberia") ->> lbr
