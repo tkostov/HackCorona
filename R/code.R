@@ -19,8 +19,8 @@ init <- function() {
 }
 
 run <- function() {
-  plotProfiles()
-  diagnostics()
+  #plotProfiles()
+  #diagnostics()
   forecasts()
 }
 
