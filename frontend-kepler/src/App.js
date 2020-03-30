@@ -6,29 +6,9 @@ import {Provider, useDispatch} from "react-redux";
 import KeplerGl from "kepler.gl";
 import {addDataToMap} from "kepler.gl/actions";
 import useSwr from "swr";
-import Modal from 'react-modal';
-
-const customStyles = {
-  content : {
-    top                   : '50%',
-    left                  : '50%',
-    right                 : 'auto',
-    bottom                : 'auto',
-    marginRight           : '-50%',
-    transform             : 'translate(-50%, -50%)'
-  }
-};
-
-const customizedKeplerGlReducer = keplerGlReducer
-    .initialState({
-        uiState: {
-            // hide side panel to disallow user customize the map
-            readOnly: false,
-        }
-    });
 
 const reducers = combineReducers({
-    keplerGl: customizedKeplerGlReducer,
+    keplerGl: keplerGlReducer,
 });
 
 const store = createStore(reducers, {}, applyMiddleware(taskMiddleware));
@@ -38,10 +18,6 @@ export default function App() {
         < Provider
     store = {store} >
         < Map / >
-        <Modal
-            style={customStyles}
-            contentLabel="Example Modal"
-        />
         < /Provider>
 )
     ;
@@ -70,7 +46,7 @@ function Map() {
                     },
                     option: {
                         centerMap: true,
-                        readOnly: true
+                        readOnly: false
                     },
                     "config": {
                         "visState": {
@@ -172,41 +148,7 @@ function Map() {
                                 "coordinate": {
                                     "enabled": false
                                 }
-                            },
-                            "layerBlending": "normal",
-                            "splitMaps": [],
-                            "animationConfig": {
-                                "currentTime": null,
-                                "speed": 1
                             }
-                        },
-                        "mapState": {
-                            "bearing": 0,
-                            "dragRotate": false,
-                            "latitude": 46.57626075046111,
-                            "longitude": 7.319057707388097,
-                            "pitch": 0,
-                            "zoom": 6.958453121881378,
-                            "isSplit": false
-                        },
-                        "mapStyle": {
-                            "styleType": "dark",
-                            "topLayerGroups": {},
-                            "visibleLayerGroups": {
-                                "label": true,
-                                "road": true,
-                                "border": true,
-                                "building": true,
-                                "water": true,
-                                "land": true,
-                                "3d building": false
-                            },
-                            "threeDBuildingColor": [
-                                224.4071295378559,
-                                224.4071295378559,
-                                224.4071295378559
-                            ],
-                            "mapStyles": {}
                         }
                     }
                 })
