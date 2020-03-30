@@ -33,6 +33,9 @@ from rpy2.robjects.conversion import localconverter
 #   Not sure if we need further processing, not 100% sure what cases represents in the R file
 #   Slightly suspicious because the column looks different (cases consists of decimals, AnzahlFall has small integers)
 
+# Load R file
+r.source('R/code.R')
+
 # (stolen from json_to_pandas.py)
 dl = DataLoader()  # instantiate DataLoader
 data_dict = dl.process_data()  # loads and forms the data dictionary
@@ -43,9 +46,6 @@ rki_data = data_dict["RKI_Data"]  # only RKI dataframe
 # Extract relevant columns
 formatted = rki_data[["Meldedatum", "Bundesland", "AnzahlFall"]]
 
-# Add the week column
-formatted.insert(loc=0, column="week", value=(formatted.index+1))
-
 # Rename columns
 formatted.rename(columns={
     "Meldedatum": "date",
@@ -53,15 +53,39 @@ formatted.rename(columns={
     "AnzahlFall": "cases"
 }, inplace=True)
 
-# Convert from UNIX format to datetimes, might want to format further
-# TODO: check if this accurately converts, e.g. accounts for calendrical oddities
-formatted["date"] = pd.to_datetime(formatted["date"], unit="ms")
+# NOTE: For testing purposes only to demonstrate that data can be formatted and passed between R and Python
+# Filter just three countries and replace them with names the R program knows
+formatted = formatted.loc[formatted['country'].isin(['Baden-Württemberg', 'Hamburg', 'Bayern'])]
+formatted['country'] = formatted['country'].map({'Baden-Württemberg': 'Guinea', 'Hamburg': 'Liberia', 'Bayern': 'SierraLeone'})
+
+# Sum and group cases by week for each country
+formatted['date'] = pd.to_datetime(formatted['date'], unit="ms") - pd.to_timedelta(7, unit='d')
+formatted = formatted.groupby([pd.Grouper(key='date', freq='W-MON'), 'country'])['cases'].sum().reset_index()
+
+# Compute cumulative sum of cases for each country
+#countries = formatted.country.unique()
+#for i, c in enumerate(countries):
+#    formatted.loc[formatted['country'] == c, 'cases'] = formatted.loc[formatted['country'] == c, 'cases'].cumsum()
+
+# Sort by country then week
+formatted.insert(loc=0, column='week', value=formatted['date'].dt.week)
+formatted = formatted.sort_values(by=['country', 'week']).reset_index(drop=True)
 
 # convert to R object
 with localconverter(ro.default_converter + pandas2ri.converter):
     dat = ro.conversion.py2rpy(formatted)
 
+# Run R script
+# NOTE: code.R is hard-coded to compute forecast for Sierra Leone.
+r.init(dat)
+forecast = r.run()
+
+# Print results
+print('finished with R file. Output: ')
+with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+    print(forecast)
+
 # Example:
-from rpy2.robjects.packages import importr
-utils = importr('utils')
-print(utils.head(dat))
+#from rpy2.robjects.packages import importr
+#utils = importr('utils')
+#print(utils.head(dat))
