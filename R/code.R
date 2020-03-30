@@ -26,12 +26,12 @@ run <- function() {
 
 loadData <- function() {
   ## ----get-data,include=FALSE----------------------------------------------
-  read_csv("https://kingaa.github.io/sbied/ebola/ebola_data.csv") -> dat
+  read_csv("https://kingaa.github.io/sbied/ebola/ebola_data.csv") ->> dat
   
   #dat
   
   ## ----popsizes,include=FALSE----------------------------------------------
-  populations <- c(Guinea=10628972,Liberia=4092310,SierraLeone=6190280)
+  populations <<- c(Guinea=10628972,Liberia=4092310,SierraLeone=6190280)
   
   ## ----plot-data,echo=FALSE------------------------------------------------
   dat %>%
@@ -41,7 +41,7 @@ loadData <- function() {
 
 initCsnippets <- function() {
   ## ----rproc,include=FALSE-------------------------------------------------
-  rSim <- Csnippet("
+  rSim <<- Csnippet("
     double lambda, beta;
     double *E = &E1;
     beta = R0 * gamma; // Transmission rate
@@ -71,7 +71,7 @@ initCsnippets <- function() {
     N_IR += transI; // No of transitions from I to R
   ")
   
-  rInit <- Csnippet("
+  rInit <<- Csnippet("
     double m = N/(S_0+E_0+I_0+R_0);
     double *E = &E1;
     int j;
@@ -84,7 +84,7 @@ initCsnippets <- function() {
   ")
   
   ## ----skel,include=FALSE--------------------------------------------------
-  skel <- Csnippet("
+  skel <<- Csnippet("
     double lambda, beta;
     const double *E = &E1;
     double *DE = &DE1;
@@ -104,7 +104,7 @@ initCsnippets <- function() {
   ")
   
   ## ----measmodel,include=FALSE---------------------------------------------
-  dObs <- Csnippet("
+  dObs <<- Csnippet("
     double f;
     if (k > 0.0)
       f = dnbinom_mu(nearbyint(cases),1.0/k,rho*N_EI,1);
@@ -113,7 +113,7 @@ initCsnippets <- function() {
     lik = (give_log) ? f : exp(f);
   ")
   
-  rObs <- Csnippet("
+  rObs <<- Csnippet("
     if (k > 0) {
       cases = rnbinom_mu(1.0/k,rho*N_EI);
     } else {
@@ -156,15 +156,15 @@ initModel <- function() {
       ) -> po
   }
   
-  ebolaModel("Guinea") -> gin
-  ebolaModel("SierraLeone") -> sle
-  ebolaModel("Liberia") -> lbr
+  ebolaModel("Guinea") ->> gin
+  ebolaModel("SierraLeone") ->> sle
+  ebolaModel("Liberia") ->> lbr
 }
 
 ## ----load-profile,echo=FALSE---------------------------------------------
 loadProfiles <- function() {
   options(stringsAsFactors=FALSE)
-  read_csv("https://kingaa.github.io/sbied/ebola/ebola-profiles.csv") -> profs
+  read_csv("https://kingaa.github.io/sbied/ebola/ebola-profiles.csv") ->> profs
 }
 
 ## ----profiles-plots,results='hide',echo=FALSE----------------------------
