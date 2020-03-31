@@ -34,6 +34,13 @@ class DataUpdateHandler:
         DatabaseHandler.update_swiss_data(df)
 
     @staticmethod
+    def _update_us_data():
+        df = DataFetcher.fetch_us_data()
+        df = DataEnricher.enrich_us_data(df)
+        df = DataPreprocessor.preprocess_us_data(df)
+        DatabaseHandler.update_us_data(df)
+
+    @staticmethod
     def update_all():
         DataUpdateHandler._update_french_data()
         DataUpdateHandler._update_german_data()
@@ -42,6 +49,4 @@ class DataUpdateHandler:
 
 
 if __name__ == "__main__":
-    DataUpdateHandler._update_german_data()
-    DataUpdateHandler._update_swiss_data()
-    DataUpdateHandler._update_italian_data()
+    DataUpdateHandler.update_all()

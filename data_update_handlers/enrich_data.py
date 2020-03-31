@@ -35,6 +35,10 @@ class DataEnricher:
         return df
 
     @staticmethod
+    def enrich_us_data(df):
+        return df
+
+    @staticmethod
     def _load_german_region_data():
         df = pd.read_excel("../data/bev_lk.xlsx")
         df.columns = [x.replace(".", "") for x in df.columns]

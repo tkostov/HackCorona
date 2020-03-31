@@ -143,3 +143,8 @@ class DataFetcher:
                     data.append(d)
 
         return pd.DataFrame(data)
+
+    @staticmethod
+    def fetch_us_data():
+        pass
+

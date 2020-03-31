@@ -108,3 +108,7 @@ class DataPreprocessor:
         df = df[["country", "region", "cases", "date", "fatalities", "latitude", "longitude", "population", "cases_per_100k", "deaths_per_100k", "hospitalized", "icu", "recovered"]]
 
         return df
+
+    @staticmethod
+    def preprocess_us_data(df):
+        return df
