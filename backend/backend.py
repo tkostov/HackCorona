@@ -133,6 +133,8 @@ def get_data_by_country(country_code):
                                   "%Y-%m-%d %H:%M:%S")])
         json_data["rows"] = rows_data
         return dumps(json_data), 200
+    else:
+        return f"The country {country_code} is not supported yet.", 204
 
 
 if __name__ == "__main__":
