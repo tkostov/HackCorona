@@ -1,0 +1,87 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "This API gives all kind of data related to the COVID19 virus. We collected the data to have a single point of ",
+    "version": "1.0.0",
+    "title": "Track the Virus",
+    "contact": {
+      "email": "manuellang183@gmail.com"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "host": "ec2-3-122-224-7.eu-central-1.compute.amazonaws.com:8080",
+  "basePath": "/",
+  "tags": [
+    {
+      "name": "data",
+      "description": "Information regarding COVID19 infections, fatalities and hospitality"
+    }
+  ],
+  "schemes": [
+    "http"
+  ],
+  "paths": {
+    "/data": {
+      "get": {
+        "tags": [
+          "data"
+        ],
+        "summary": "Lists all information",
+        "description": "",
+        "operationId": "addPet",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          }
+        }
+      }
+    },
+    "/data/{countryCode}": {
+      "get": {
+        "tags": [
+          "data"
+        ],
+        "summary": "List data by country",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "countryCode",
+            "in": "path",
+            "description": "country code",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          }
+        }
+      }
+    },
+    "/data/sqrt": {
+      "get": {
+        "tags": [
+          "data"
+        ],
+        "summary": "List square root of values for a better visualization",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          }
+        }
+      }
+    }
+  }
+}
