@@ -1,12 +1,11 @@
 import datetime
 from dotenv import load_dotenv
-from flask import Flask, request
+from flask import Flask
 from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
 from bson.json_util import dumps
 from math import sqrt
 import os
-import pandas as pd
 from pymongo import MongoClient
 
 app = Flask(__name__)
@@ -58,30 +57,29 @@ def get_data_sqrt_scaled():
                             {"name": "ICUs", "format": "", "type": "integer"},
                             {"name": "latitude", "format": "", "type": "real"},
                             {"name": "longitude", "format": "", "type": "real"},
-                            {"name": "day", "format": "YYYY-M-D H:m:s", "type": "timestamp"}]}
-    rows_data = []
-    backend_data = list(it_collection.find())
-    for x in backend_data:
-        if datetime.datetime.strptime(x["date"].replace("T", " "),
-                                      '%Y-%m-%d %H:%M:%S').month > 2 or datetime.datetime.strptime(
-                x["date"].replace("T", " "), '%Y-%m-%d %H:%M:%S').year > 2020:
-            rows_data.append([int(sqrt(x["cases"])), int(sqrt(x["fatalities"])), int(sqrt(x["icu"])), x["latitude"], x["longitude"],
-                              datetime.datetime.strptime(x["date"].replace("T", " "), '%Y-%m-%d %H:%M:%S').strftime(
-                                  "%Y-%m-%d %H:%M:%S")])
-    backend_data = list(ch_collection.find())
-    for x in backend_data:
-        if datetime.datetime.strptime(x["date"], '%Y-%m-%d').month > 1 or datetime.datetime.strptime(x["date"],
-                                                                                                              '%Y-%m-%d').year > 2020:
-            rows_data.append([int(sqrt(x["cases"])), int(sqrt(x["fatalities"])), int(sqrt(x["icu"])), x["latitude"], x["longitude"],
-                              datetime.datetime.strptime(x["date"], '%Y-%m-%d').strftime("%Y-%m-%d %H:%M:%S")])
+                            {"name": "day", "format": "YYYY-M-D H:m:s", "type": "timestamp"}]
+                 "rows": []}
 
-    backend_data = list(de_collection.find())
-    for x in backend_data:
-        if datetime.datetime.strptime(x["date"], '%Y-%m-%d %H:%M:%S').month > 2 or datetime.datetime.strptime(x["date"],
-                                                                                                              '%Y-%m-%d %H:%M:%S').year > 2020:
-            rows_data.append([int(sqrt(x["cases"])), x["fatalities"], x["icu"], x["latitude"], x["longitude"], x["date"]])
+    # add IT data
+    json_data["rows"] += [[int(sqrt(x["cases"])), int(sqrt(x["fatalities"])), int(sqrt(x["icu"])), x["latitude"],
+                          x["longitude"], datetime.datetime.strptime(x["date"].replace("T", " "), '%Y-%m-%d %H:%M:%S')
+                          .strftime("%Y-%m-%d %H:%M:%S")] for x in list(it_collection.find()) if
+                          datetime.datetime.strptime(x["date"].replace("T", " "), "%Y-%m-%d %H:%M:%S").month > 2 or
+                          datetime.datetime.strptime(x["date"].replace("T", " "), '%Y-%m-%d %H:%M:%S').year > 2020]
 
-    json_data["rows"] = rows_data
+    # add CH data
+    json_data["rows"] += [[int(sqrt(x["cases"])), int(sqrt(x["fatalities"])), int(sqrt(x["icu"])), x["latitude"],
+                           x["longitude"], datetime.datetime.strptime(x["date"], '%Y-%m-%d').strftime(
+                           "%Y-%m-%d %H:%M:%S")] for x in list(ch_collection.find()) if datetime.datetime.strptime(
+                           x["date"], '%Y-%m-%d').month > 1 or datetime.datetime.strptime(x["date"], '%Y-%m-%d').year >
+                           2020]
+
+    # add DE data
+    json_data["rows"] += [[int(sqrt(x["cases"])), x["fatalities"], int(sqrt(x["icu"])), x["latitude"], x["longitude"],
+                           x["date"]] for x in list(de_collection.find()) if datetime.datetime.strptime(x["date"],
+                           '%Y-%m-%d %H:%M:%S').month > 2 or datetime.datetime.strptime(x["date"], '%Y-%m-%d %H:%M:%S')
+                           .year > 2020]
+
     return dumps(json_data), 200
 
 
