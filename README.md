@@ -11,6 +11,6 @@
 * Backend handling data and requests implemented with Flask.
 * Simulation with SEIR (in production) and several other models such as a Progressive State Model and a Latent Variable Model. 
 
-#### Please note that our predictions are based on sophisticated mathematical models and aim to give insights about possible resource shortages and crisis areas. We do not, by any means, guarantee that our predictions provide any guarantees.
+#### Please note that our predictions are based on sophisticated mathematical models and aim to give insights about possible resource shortages and crisis areas. We do not, by any means, guarantee that our predictions provide any reliability.
 
 ![Track the virus web application](https://i.imgur.com/1M3EiJH.png)
