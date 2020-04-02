@@ -44,7 +44,7 @@ export default function CountrySelect() {
     </React.Fragment>
 )}
     renderInput={(params) => (
-    <TextField
+    <TextField required
     {...params}
     label="Choose a country"
     inputProps={{

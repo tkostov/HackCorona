@@ -6,9 +6,21 @@ import useSwr from "swr";
 import {createStore, combineReducers, applyMiddleware} from "redux";
 import keplerGlReducer from "kepler.gl/dist/reducers";
 import {taskMiddleware} from "react-palm/tasks/redux";
+import {ActionTypes} from 'kepler.gl/actions';
+import {handleActions} from 'redux-actions';
+
+
+const appReducer = handleActions({
+    // listen on kepler.gl map update action to store a copy of viewport in app state
+    [ActionTypes.LAYER_CLICK]: (state, action) => {
+        console.log('logging vis state', action);
+        return action;
+    }
+}, {});
 
 const reducers = combineReducers({
-    keplerGl: keplerGlReducer,
+    app: appReducer,
+    keplerGl: keplerGlReducer
 });
 
 const store = createStore(reducers, {}, applyMiddleware(taskMiddleware));

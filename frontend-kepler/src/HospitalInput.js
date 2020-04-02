@@ -19,12 +19,12 @@ export default function HospitalInput() {
 
     return (
         <form className={classes.root} noValidate autoComplete="off">
-        <TextField id="standard-basic" label="Hospital" />
-        <TextField id="standard-basic" label="City" />
+        <TextField required id="standard-basic" label="Hospital" />
+        <TextField required id="standard-basic" label="City" />
         <CountrySelect/>
-        <TextField id="standard-basic" label="ICUs in use" />
-        <TextField id="standard-basic" label="ICU capacity" />
-        <Link to={"./input"}><Button
+        <TextField required id="standard-basic" label="ICUs in use" />
+        <TextField required id="standard-basic" label="ICU capacity" />
+        <Link to={"/"}><Button
     type="submit"
     fullWidth
     variant="contained"
