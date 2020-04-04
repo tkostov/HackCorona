@@ -1,5 +1,4 @@
 from pandas import DataFrame
-
 from research.model import ModelParams, base_seir_model
 import matplotlib.pyplot as plt
 from research.json_to_pandas import DataLoader

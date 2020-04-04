@@ -22,8 +22,9 @@ class DataLoader(object):
     def __init__(self):
         load_dotenv()
 
-    def pull_data(self):
-        return requests.get('http://ec2-3-122-224-7.eu-central-1.compute.amazonaws.com:8080/daily_data').json()
+    def pull_data(self, uri='http://ec2-3-122-224-7.eu-central-1.compute.amazonaws.com:8080/daily_data'):
+        return requests.get(uri).json()
+#        return requests.get('http://ec2-3-122-224-7.eu-central-1.compute.amazonaws.com:8080/daily_data').json()
 
     @staticmethod
     def parse_row(row_dict):
@@ -56,11 +57,26 @@ class DataLoader(object):
         data_dict = self.reshape_data(data_dict)
         return data_dict
 
+    def get_new_data(self):
+        uri = "http://localhost:8081/data"
+        json_data = self.pull_data(uri)
+        table = np.array(json_data["rows"])
+        column_names = []
+        for x in json_data["fields"]:
+            column_names.append(x["name"])
+        df = pd.DataFrame(table,columns = column_names)
+        df["day"] = pd.to_datetime(df["day"])
+        df["id"] =  df["latitude"].apply(lambda x: str(x)) + "_" + df["longitude"].apply(lambda x: str(x))
+        unique_ids = df["id"].unique()
+        regions = {}
+        for x in unique_ids:
+            regions[x] = {}
+            regions[x]["data_fit"] = df[df["id"] == x]
+        return regions
 
 # Also as example
 
 if __name__ == "__main__":
-    dl = DataLoader(from_back_end=True)  # instanciate DataLoader
-    data_dict = dl.process_data()  # loads and forms the data dictionary
-    rki_data = data_dict["RKI_Data"]  # only RKI dataframe
-    print(rki_data.head())
+    dl = DataLoader()  # instanciate DataLoader
+    train_data = dl.get_new_data()
+    print("t")
