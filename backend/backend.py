@@ -20,6 +20,7 @@ def get_infections():
     it_collection = db["it_data"]
     ch_collection = db["ch_data"]
     de_collection = db["de_data"]
+    us_collection = db["us_data"]
     json_data = {"fields": [{"name": "cases", "format": "", "type": "integer"},
                             {"name": "deaths", "format": "", "type": "integer"},
                             {"name": "population", "format": "", "type": "integer"},
@@ -38,6 +39,10 @@ def get_infections():
                           datetime.datetime.strptime(x["date"], '%Y-%m-%d').strftime("%Y-%m-%d %H:%M:%S")])
 
     backend_data = list(de_collection.find())
+    for x in backend_data:
+        rows_data.append([x["cases"], x["fatalities"], x["population"], x["latitude"], x["longitude"], x["date"]])
+
+    backend_data = list(us_collection.find())
     for x in backend_data:
         rows_data.append([x["cases"], x["fatalities"], x["population"], x["latitude"], x["longitude"], x["date"]])
 
