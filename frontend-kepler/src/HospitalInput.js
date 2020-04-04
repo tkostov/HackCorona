@@ -45,7 +45,7 @@ export default function HospitalInput() {
   return (
     <React.Fragment>
       <Title>Today</Title>
-      <ResponsiveContainer>
+      <ResponsiveContainer width='100%' aspect={4.0/3.0}>
         <LineChart
           data={data}
           margin={{
