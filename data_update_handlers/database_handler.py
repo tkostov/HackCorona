@@ -21,7 +21,7 @@ class DatabaseHandler:
         load_dotenv()
         client = MongoClient(f'mongodb://{os.getenv("USR_")}:{os.getenv("PWD_")}@{os.getenv("REMOTE_HOST")}:{os.getenv("REMOTE_PORT")}/{os.getenv("AUTH_DB")}')
         db = client[os.getenv("MAIN_DB")]
-        data_collection = db["it_data_new"]
+        data_collection = db["it_data"]
         data_collection.insert_many(df.to_dict("records"))
 
     @staticmethod

@@ -46,7 +46,8 @@ class DataUpdateHandler:
         DataUpdateHandler._update_german_data()
         DataUpdateHandler._update_italian_data()
         DataUpdateHandler._update_swiss_data()
+        DataUpdateHandler._update_us_data()
 
 
 if __name__ == "__main__":
-    DataUpdateHandler._update_us_data()
+    DataUpdateHandler.update_all()

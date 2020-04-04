@@ -133,9 +133,10 @@ class DataPreprocessor:
                                       "date": datetime.datetime.strptime(val_col, "%m/%d/%y").strftime(
                                           "%Y-%m-%d %H:%M:%S"), "fatalities": 0,
                                       "latitude": row["Lat"], "longitude": row["Long_"],
-                                      "population": row["population"],
+                                      "population": int(row["population"]),
                                       "cases_per_100k": row[val_col] * row['population'] / 100000, "deaths_per_100k": 0,
                                       "icu": 0, "beds": 0})
 
         df = pd.DataFrame(values_to_add)
+        df = df[df["population"] > 0]
         return df
