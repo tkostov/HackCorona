@@ -49,4 +49,4 @@ class DataUpdateHandler:
 
 
 if __name__ == "__main__":
-    DataUpdateHandler.update_all()
+    DataUpdateHandler._update_us_data()

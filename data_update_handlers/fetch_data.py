@@ -1,11 +1,13 @@
 import pandas as pd
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from dotenv import load_dotenv
 import json
 import urllib
 import urllib.request
 from configparser import ConfigParser
-
+import requests
+import os
+import numpy as np
 
 def get_date_range(dfs):
     min_dates = []
@@ -146,5 +148,15 @@ class DataFetcher:
 
     @staticmethod
     def fetch_us_data():
-        pass
+        path = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv"
+        df = pd.read_csv(path)
+        df["City"] = df["Admin2"]
+        df.drop(columns=["Admin2"], inplace=True)
+        df.sort_values("City", inplace=True)
+        df = df[["UID", "FIPS", "City", "Province_State", "Lat", "Long_"] + [x for x in df.columns if "/" in x]]
+        return df
+
+
+if __name__ == "__main__":
+    DataFetcher.fetch_us_data()
 

@@ -52,33 +52,42 @@ def get_data_sqrt_scaled():
     it_collection = db["it_data"]
     ch_collection = db["ch_data"]
     de_collection = db["de_data"]
+    us_collection = db["us_data"]
     json_data = {"fields": [{"name": "cases", "format": "", "type": "integer"},
                             {"name": "deaths", "format": "", "type": "integer"},
                             {"name": "ICUs", "format": "", "type": "integer"},
                             {"name": "latitude", "format": "", "type": "real"},
                             {"name": "longitude", "format": "", "type": "real"},
-                            {"name": "day", "format": "YYYY-M-D H:m:s", "type": "timestamp"}]
+                            {"name": "day", "format": "YYYY-M-D H:m:s", "type": "timestamp"}],
                  "rows": []}
 
     # add IT data
     json_data["rows"] += [[int(sqrt(x["cases"])), int(sqrt(x["fatalities"])), int(sqrt(x["icu"])), x["latitude"],
-                          x["longitude"], datetime.datetime.strptime(x["date"].replace("T", " "), '%Y-%m-%d %H:%M:%S')
-                          .strftime("%Y-%m-%d %H:%M:%S")] for x in list(it_collection.find()) if
+                           x["longitude"], datetime.datetime.strptime(x["date"].replace("T", " "), '%Y-%m-%d %H:%M:%S')
+                               .strftime("%Y-%m-%d %H:%M:%S")] for x in list(it_collection.find()) if
                           datetime.datetime.strptime(x["date"].replace("T", " "), "%Y-%m-%d %H:%M:%S").month > 2 or
                           datetime.datetime.strptime(x["date"].replace("T", " "), '%Y-%m-%d %H:%M:%S').year > 2020]
 
     # add CH data
     json_data["rows"] += [[int(sqrt(x["cases"])), int(sqrt(x["fatalities"])), int(sqrt(x["icu"])), x["latitude"],
                            x["longitude"], datetime.datetime.strptime(x["date"], '%Y-%m-%d').strftime(
-                           "%Y-%m-%d %H:%M:%S")] for x in list(ch_collection.find()) if datetime.datetime.strptime(
-                           x["date"], '%Y-%m-%d').month > 1 or datetime.datetime.strptime(x["date"], '%Y-%m-%d').year >
-                           2020]
+            "%Y-%m-%d %H:%M:%S")] for x in list(ch_collection.find()) if datetime.datetime.strptime(
+        x["date"], '%Y-%m-%d').month > 1 or datetime.datetime.strptime(x["date"], '%Y-%m-%d').year >
+                          2020]
 
     # add DE data
     json_data["rows"] += [[int(sqrt(x["cases"])), x["fatalities"], int(sqrt(x["icu"])), x["latitude"], x["longitude"],
                            x["date"]] for x in list(de_collection.find()) if datetime.datetime.strptime(x["date"],
-                           '%Y-%m-%d %H:%M:%S').month > 2 or datetime.datetime.strptime(x["date"], '%Y-%m-%d %H:%M:%S')
-                           .year > 2020]
+                                                                                                        '%Y-%m-%d %H:%M:%S').month > 2 or datetime.datetime.strptime(
+        x["date"], '%Y-%m-%d %H:%M:%S')
+                              .year > 2020]
+
+    # add US data
+    json_data["rows"] += [[int(sqrt(x["cases"])), x["fatalities"], int(sqrt(x["icu"])), x["latitude"], x["longitude"],
+                           x["date"]] for x in list(us_collection.find()) if datetime.datetime.strptime(x["date"],
+                                                                                                        '%Y-%m-%d %H:%M:%S').month > 2 or datetime.datetime.strptime(
+        x["date"], '%Y-%m-%d %H:%M:%S')
+                              .year > 2020]
 
     return dumps(json_data), 200
 
@@ -116,7 +125,23 @@ def get_data_by_country(country_code):
         json_data["rows"] = rows_data
         return dumps(json_data), 200
     elif country_code == "it":
-        client = MongoClient(f'mongodb://{os.getenv("USR_")}:{os.getenv("PWD_")}@{os.getenv("REMOTE_HOST")}:{os.getenv( "REMOTE_PORT")}/{os.getenv("AUTH_DB")}')
+        client = MongoClient(f'mongodb://{os.getenv("USR_")}:{os.getenv("PWD_")}@{os.getenv("REMOTE_HOST")}:{os.getenv("REMOTE_PORT")}/{os.getenv("AUTH_DB")}')
+        db = client[os.getenv("MAIN_DB")]
+        lk_aggregated_collection = db["it_data"]
+        json_data = {"fields": [{"name": "density", "format": "", "type": "integer"},
+                                {"name": "latitude", "format": "", "type": "real"},
+                                {"name": "longitude", "format": "", "type": "real"},
+                                {"name": "day", "format": "YYYY-M-D H:m:s", "type": "timestamp"}]}
+        rows_data = []
+        backend_data = list(lk_aggregated_collection.find())
+        for x in backend_data:
+            rows_data.append([x["cases"], x["latitude"], x["longitude"],
+                              datetime.datetime.strptime(x["date"].replace("T", " "), '%Y-%m-%d %H:%M:%S').strftime(
+                                  "%Y-%m-%d %H:%M:%S")])
+        json_data["rows"] = rows_data
+        return dumps(json_data), 200
+    elif country_code == "us":
+        client = MongoClient(f'mongodb://{os.getenv("USR_")}:{os.getenv("PWD_")}@{os.getenv("REMOTE_HOST")}:{os.getenv("REMOTE_PORT")}/{os.getenv("AUTH_DB")}')
         db = client[os.getenv("MAIN_DB")]
         lk_aggregated_collection = db["it_data"]
         json_data = {"fields": [{"name": "density", "format": "", "type": "integer"},
@@ -133,6 +158,15 @@ def get_data_by_country(country_code):
         return dumps(json_data), 200
     else:
         return f"The country {country_code} is not supported yet.", 204
+
+
+@app.route("/asdf")
+def get_hosp_info():
+    pass
+
+# request.params what's needed - location (OSM API)
+# predict infections and ICUs in region
+# last weeks vs future (trend)
 
 
 if __name__ == "__main__":

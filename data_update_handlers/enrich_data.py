@@ -36,6 +36,8 @@ class DataEnricher:
 
     @staticmethod
     def enrich_us_data(df):
+        df_population = DataEnricher._load_us_population_data()
+        df = pd.merge(df, df_population, left_on=["City", "Province_State"], right_on=["city", "state_name"])
         return df
 
     @staticmethod
@@ -137,4 +139,9 @@ class DataEnricher:
     @staticmethod
     def _load_italian_region_data():
         df = pd.read_csv("../covid19-cases-italy/demographics.csv")
+        return df
+
+    @staticmethod
+    def _load_us_population_data():
+        df = pd.read_csv("../data/uscities.csv")
         return df
