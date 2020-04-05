@@ -71,8 +71,11 @@ class DataPreprocessor:
 
         df['country'] = "DE"
 
+        df["date"] = pd.to_datetime(df["date"], format="%Y-%m-%d %H:%M:%S")
+        df["need"] = 0
+
         df = df[["country", "region", "cases", "date", "fatalities", "latitude", "longitude", "population",
-                 "cases_per_100k", "deaths_per_100k", "icu", "beds"]]
+                 "cases_per_100k", "deaths_per_100k", "icu", "beds", "need"]]
 
         return df
 
@@ -97,8 +100,12 @@ class DataPreprocessor:
 
         df['country'] = "IT"
 
+        df["date"].replace("T", " ", inplace=True)
+        df["date"] = pd.to_datetime(df["date"], format="%Y-%m-%d %H:%M:%S")
+        df["need"] = 0
+
         df = df[["country", "region", "cases", "date", "fatalities", "latitude", "longitude", "population",
-                 "cases_per_100k", "deaths_per_100k", "hospitalized", "icu", "recovered"]]
+                 "cases_per_100k", "deaths_per_100k", "hospitalized", "icu", "recovered", "need"]]
         return df
 
     @staticmethod
@@ -117,9 +124,12 @@ class DataPreprocessor:
 
         df['country'] = "CH"
 
+        df["date"] = pd.to_datetime(df["date"], format="%Y-%m-%d")
+        df["need"] = 0
+
         # remove unused columns and order according to the db standard
         df = df[["country", "region", "cases", "date", "fatalities", "latitude", "longitude", "population",
-                 "cases_per_100k", "deaths_per_100k", "hospitalized", "icu", "recovered"]]
+                 "cases_per_100k", "deaths_per_100k", "hospitalized", "icu", "recovered", "need"]]
 
         return df
 
@@ -130,12 +140,11 @@ class DataPreprocessor:
         for index, row in df.iterrows():
             for val_col in val_cols:
                 values_to_add.append({"country": "US", "region": row["City"], "cases": row[val_col],
-                                      "date": datetime.datetime.strptime(val_col, "%m/%d/%y").strftime(
-                                          "%Y-%m-%d %H:%M:%S"), "fatalities": 0,
+                                      "date": datetime.datetime.strptime(val_col, "%m/%d/%y"), "fatalities": 0,
                                       "latitude": row["Lat"], "longitude": row["Long_"],
                                       "population": int(row["population"]),
                                       "cases_per_100k": row[val_col] * row['population'] / 100000, "deaths_per_100k": 0,
-                                      "icu": 0, "beds": 0})
+                                      "icu": 0, "beds": 0, "need": 0})
 
         df = pd.DataFrame(values_to_add)
         df = df[df["population"] > 0]

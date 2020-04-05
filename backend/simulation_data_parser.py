@@ -39,11 +39,7 @@ def main():
         try:
             vals = list(collection.find({"latitude": latitude, "longitude": longitude}))
             for val in vals:
-                val["date"] = val["date"].replace("T", " ")
-                if country == "CH":
-                    date = datetime.strptime(val["date"], "%Y-%m-%d")
-                else:
-                    date = datetime.strptime(val["date"], "%Y-%m-%d %H:%M:%S")
+                date = val["date"]
                 if date > last_date:
                     last_date = date
                     last_icu = val["icu"]
@@ -60,7 +56,7 @@ def main():
                         "country": "DE",
                         "region": region,
                         "cases": int(data[key]["forecast_infected"][i]),
-                        "date": (last_date + timedelta(days=i+1)).strftime("%Y-%m-%d %H:%M:%S"),
+                        "date": (last_date + timedelta(days=i+1)),
                         "fatalities": int(data[key]["forecast_deceased"][i]),
                         "latitude": latitude,
                         "longitude": longitude,
@@ -68,7 +64,8 @@ def main():
                         "cases_per_100k": float(1e5 * data[key]["forecast_infected"][i] * population),
                         "deaths_per_100": float(1e5 * data[key]["forecast_deceased"][i] * population),
                         "icu": last_icu,
-                        "beds": beds
+                        "beds": beds,
+                        "need": 0
                     })
                 elif country == "CH":
                     collection.insert_one({
@@ -76,7 +73,7 @@ def main():
                         "canton": canton,
                         "cases": int(data[key]["forecast_infected"][i]),
                         "fatalities": int(data[key]["forecast_deceased"][i]),
-                        "date": (last_date + timedelta(days=i + 1)).strftime("%Y-%m-%d"),
+                        "date": (last_date + timedelta(days=i + 1)),
                         "latitude": latitude,
                         "longitude": longitude,
                         "population": population,
@@ -84,14 +81,15 @@ def main():
                         "deaths_per_100": float(1e5 * data[key]["forecast_deceased"][i] * population),
                         "hospitalized": 0,
                         "icu": last_icu,
-                        "released": 0
+                        "released": 0,
+                        "need": 0
                     })
                 elif country == "IT":
                     collection.insert_one({
                         "country": "IT",
                         "region": region,
                         "cases": int(data[key]["forecast_infected"][i]),
-                        "date": (last_date + timedelta(days=i+1)).strftime("%Y-%m-%d %H:%M:%S"),
+                        "date": (last_date + timedelta(days=i+1)),
                         "fatalities": int(data[key]["forecast_deceased"][i]),
                         "latitude": latitude,
                         "longitude": longitude,
@@ -100,7 +98,8 @@ def main():
                         "deaths_per_100": float(1e5 * data[key]["forecast_deceased"][i] * population),
                         "hospitalized": 0,
                         "icu": last_icu,
-                        "released": 0
+                        "released": 0,
+                        "need": 0
                     })
                 elif country == "US":
                     collection.insert_one({
@@ -116,7 +115,8 @@ def main():
                         "deaths_per_100": float(1e5 * data[key]["forecast_deceased"][i] * population),
                         "hospitalized": 0,
                         "icu": last_icu,
-                        "released": 0
+                        "released": 0,
+                        "need": 0
                     })
         except:
             print("fail")

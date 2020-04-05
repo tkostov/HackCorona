@@ -1,6 +1,6 @@
 import datetime
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask, request
 from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
 from bson.json_util import dumps
@@ -165,9 +165,46 @@ def get_data_by_country(country_code):
         return f"The country {country_code} is not supported yet.", 204
 
 
-@app.route("/asdf")
+@app.route("/info")
 def get_hosp_info():
-    pass
+    city = request.args.get('city')
+    state = request.args.get('state')
+    country = request.args.get('country')
+    needs = request.args.get('needs')
+    client = MongoClient(f'mongodb://{os.getenv("USR_")}:{os.getenv("PWD_")}@{os.getenv("REMOTE_HOST")}:{os.getenv("REMOTE_PORT")}/{os.getenv("AUTH_DB")}')
+    db = client[os.getenv("MAIN_DB")]
+    it_collection = db["it_data"]
+    ch_collection = db["ch_data"]
+    de_collection = db["de_data"]
+    us_collection = db["us_data"]
+    data = []
+    if country == "IT":
+        data = list(it_collection.find({"region": state}))
+        geo_coordinates = [{x["Latitude"], x["Longitude"]} for x in data][0]
+        data = [{x["date"], x["cases"]} for x in data]
+    elif country == "CH":
+        data = list(ch_collection.find({"region": state}))
+        geo_coordinates = [{x["Latitude"], x["Longitude"]} for x in data][0]
+        data = [{x["date"], x["cases"]} for x in data]
+    elif country == "US":
+        data = list(us_collection.find({"region": city}))
+        geo_coordinates = [[x["latitude"], x["longitude"]] for x in data][0]
+        data = [{"date": x["date"], "cases": x["cases"]} for x in data]
+        test_samples = list(us_collection.find({
+            'Latitude': geo_coordinates[0],
+            'Longitude': geo_coordinates[1],
+            'date': {'$gte': datetime.datetime.now()}
+        }))
+        us_collection.update({
+            'Latitude': geo_coordinates[0],
+            'Longitude': geo_coordinates[1],
+            'date': {'$gte': datetime.datetime.now()}
+        }, {
+            '$inc': {
+                'needs': int(needs)
+            }
+        }, upsert=False)
+    return dumps(data), 200
 
 # request.params what's needed - location (OSM API)
 # predict infections and ICUs in region
