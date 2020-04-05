@@ -98,16 +98,15 @@ def fit_get_predictions(social_distancing_params: list, days: int) -> np.array:
     all_training_dicts = load_data()
     all_results_dicts = {}
     for location_key in tqdm(all_training_dicts.keys()):
-        historical_data_lk =  all_training_dicts[location_key]["data_fit"]
+        historical_data_lk = all_training_dicts[location_key]["data_fit"]
         population_lk = int(historical_data_lk["population"].values[0])
         deaths = historical_data_lk["deaths"].values
-
 
         for x in historical_data_lk.columns:
             if x not in ["day", "id"]:
                 historical_data_lk = historical_data_lk.astype({x : np.double})
 
-        # TODO ugly hack for prototype -> Change this to a more meaningull estimate of deaths
+        # TODO ugly hack for prototype -> Change this to a more meaninfull estimate of deaths
         deaths_proportion = np.nan_to_num(historical_data_lk["deaths"]/historical_data_lk["cases"], 0)
         deaths_proportion = np.nanmean(deaths_proportion)
 
