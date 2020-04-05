@@ -47,58 +47,49 @@ const data = [
 
 export default function HospitalInput() {
   const theme = useTheme();
-
   const classes = useStyles();
-
-  // The first commit of Material-UI
-  const [selectedDate, setSelectedDate] = React.useState(new Date('2014-08-18T21:11:54'));
-
+  const [selectedDate, setSelectedDate] = React.useState(new Date('2020-04-05T00:00:00'));
   const handleDateChange = (date) => {
     setSelectedDate(date);
   };
 
   return (
     <React.Fragment>
-        <MuiPickersUtilsProvider utils={DateFnsUtils}>
-          <KeyboardDatePicker
-              disableToolbar
-              variant="inline"
-              format="MM/dd/yyyy"
-              margin="normal"
-              id="date-picker-inline"
-              label="Date picker inline"
-              value={selectedDate}
-              onChange={handleDateChange}
-              KeyboardButtonProps={{
-                'aria-label': 'change date',
-              }}
-            />
-
-        </MuiPickersUtilsProvider>
-
         <form className={classes.root} noValidate autoComplete="off">
             <CountrySelect/>
             <TextField required id="standard-basic" label="Hospital" />
             <TextField required id="standard-basic" label="City" />
             <TextField required id="standard-basic" label="State" />
         </form>
-
+        Items needed by:
         <form className={classes.root} noValidate autoComplete="off">
-            <label><br /><br />  Required immediately</label>
+            <MuiPickersUtilsProvider utils={DateFnsUtils}>
+              <KeyboardDatePicker
+                  disableToolbar
+                  variant="inline"
+                  format="MM/dd/yyyy"
+                  margin="normal"
+                  id="date-picker-inline"
+                  label="Date picker inline"
+                  value={selectedDate}
+                  onChange={handleDateChange}
+                  KeyboardButtonProps={{
+                    'aria-label': 'change date',
+                  }}
+                />
+            </MuiPickersUtilsProvider>
         </form>
-
         <form className={classes.root} noValidate autoComplete="off">
              <TextField required id="standard-basic" label="Item" />
              <TextField required id="standard-basic" label="Quantity" />
-
         </form>
         <form className={classes.root} noValidate autoComplete="off">
-             <TextField required id="standard-basic" label="Item" />
-             <TextField required id="standard-basic" label="Quantity" />
+             <TextField id="standard-basic" label="Item" />
+             <TextField id="standard-basic" label="Quantity" />
         </form>
         <form className={classes.root} noValidate autoComplete="off">
-             <TextField required id="standard-basic" label="Item" />
-             <TextField required id="standard-basic" label="Quantity" />
+             <TextField id="standard-basic" label="Item" />
+             <TextField id="standard-basic" label="Quantity" />
         </form>
         <form className={useStyles.root} noValidate autoComplete="off">
           <Title>Today</Title>
