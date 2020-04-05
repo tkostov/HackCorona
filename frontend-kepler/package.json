@@ -3,12 +3,15 @@
   "version": "0.1.0",
   "private": false,
   "dependencies": {
+    "@date-io/date-fns": "^2.5.0",
     "@material-ui/core": "^4.9.8",
     "@material-ui/icons": "^4.9.1",
     "@material-ui/lab": "^4.0.0-alpha.47",
+    "@material-ui/pickers": "^3.2.10",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
+    "date-fns": "^2.0.0-beta.5",
     "kepler.gl": "^2.0.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
@@ -43,5 +46,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@material-ui/pickers": "^3.2.10"
   }
 }

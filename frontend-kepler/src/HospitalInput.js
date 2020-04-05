@@ -6,10 +6,17 @@ import {Link} from "react-router";
 import Button from "@material-ui/core/Button";
 
 
+import Grid from '@material-ui/core/Grid';
+import DateFnsUtils from '@date-io/date-fns';
+import {
+  MuiPickersUtilsProvider,
+  KeyboardTimePicker,
+  KeyboardDatePicker,
+} from '@material-ui/pickers';
+
 import Title from './Title';
 import { useTheme } from '@material-ui/core/styles';
 import { LineChart, Line, XAxis, YAxis, Label, ResponsiveContainer } from 'recharts';
-
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -41,33 +48,96 @@ const data = [
 export default function HospitalInput() {
   const theme = useTheme();
 
-  console.log(data)
+  const classes = useStyles();
+
+  // The first commit of Material-UI
+  const [selectedDate, setSelectedDate] = React.useState(new Date('2014-08-18T21:11:54'));
+
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
+  };
+
   return (
     <React.Fragment>
-      <Title>Today</Title>
-      <ResponsiveContainer width='100%' aspect={4.0/3.0}>
-        <LineChart
-          data={data}
-          margin={{
-            top: 16,
-            right: 16,
-            bottom: 0,
-            left: 24,
-          }}
-        >
-          <XAxis dataKey="time" stroke={theme.palette.text.secondary} />
-          <YAxis stroke={theme.palette.text.secondary}>
-            <Label
-              angle={270}
-              position="left"
-              style={{ textAnchor: 'middle', fill: theme.palette.text.primary }}
+        <MuiPickersUtilsProvider utils={DateFnsUtils}>
+          <KeyboardDatePicker
+              disableToolbar
+              variant="inline"
+              format="MM/dd/yyyy"
+              margin="normal"
+              id="date-picker-inline"
+              label="Date picker inline"
+              value={selectedDate}
+              onChange={handleDateChange}
+              KeyboardButtonProps={{
+                'aria-label': 'change date',
+              }}
+            />
+
+        </MuiPickersUtilsProvider>
+
+        <form className={classes.root} noValidate autoComplete="off">
+            <CountrySelect/>
+            <TextField required id="standard-basic" label="Hospital" />
+            <TextField required id="standard-basic" label="City" />
+            <TextField required id="standard-basic" label="State" />
+        </form>
+
+        <form className={classes.root} noValidate autoComplete="off">
+            <label><br /><br />  Required immediately</label>
+        </form>
+
+        <form className={classes.root} noValidate autoComplete="off">
+             <TextField required id="standard-basic" label="Item" />
+             <TextField required id="standard-basic" label="Quantity" />
+
+        </form>
+        <form className={classes.root} noValidate autoComplete="off">
+             <TextField required id="standard-basic" label="Item" />
+             <TextField required id="standard-basic" label="Quantity" />
+        </form>
+        <form className={classes.root} noValidate autoComplete="off">
+             <TextField required id="standard-basic" label="Item" />
+             <TextField required id="standard-basic" label="Quantity" />
+        </form>
+        <form className={useStyles.root} noValidate autoComplete="off">
+          <Title>Today</Title>
+          <ResponsiveContainer width='60%' aspect={4.0/3.0}>
+            <LineChart
+              data={data}
+              margin={{
+                top: 16,
+                right: 16,
+                bottom: 0,
+                left: 24,
+              }}
             >
-              Sales ($)
-            </Label>
-          </YAxis>
-          <Line type="monotone" dataKey="amount" stroke={theme.palette.primary.main} dot={false} />
-        </LineChart>
-      </ResponsiveContainer>
+              <XAxis dataKey="time" stroke={theme.palette.text.secondary} />
+              <YAxis stroke={theme.palette.text.secondary}>
+                <Label
+                  angle={270}
+                  position="left"
+                  style={{ textAnchor: 'middle', fill: theme.palette.text.primary }}
+                >
+                  Sales ($)
+                </Label>
+              </YAxis>
+              <Line type="monotone" dataKey="amount" stroke={theme.palette.primary.main} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </form>
+
+         <Link to={"/"}>
+             <Button
+                 type="submit"
+                 fullWidth
+                 variant="contained"
+                 color="primary"
+                 className={classes.submit}
+                 >
+             Submit
+         </Button></Link>
+
     </React.Fragment>
   );
 }
