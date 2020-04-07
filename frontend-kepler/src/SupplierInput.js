@@ -5,7 +5,6 @@ import CountrySelect from './CountrySelect'
 import {Link} from "react-router";
 import Button from "@material-ui/core/Button";
 
-import useSwr from "swr";
 
 import Grid from '@material-ui/core/Grid';
 import DateFnsUtils from '@date-io/date-fns';
@@ -35,61 +34,34 @@ function createData(time, amount) {
 }
 
 const data = [
-  createData('2020-03-27', 1000),
-  createData('2020-03-28', 1300),
-  createData('2020-03-29', 1700),
-  createData('2020-03-30', 2200),
-  createData('2020-03-31', 2800),
-  createData('2020-04-01', 3500),
-  createData('2020-04-02', 4300),
-  createData('2020-04-03', 5200),
-  createData('2020-04-04', 0),
-  createData('2020-04-05', 0),
-  createData('2020-04-06', 0),
-  createData('2020-04-07', 0),
+  createData('00:00', 0),
+  createData('03:00', 300),
+  createData('06:00', 600),
+  createData('09:00', 800),
+  createData('12:00', 1500),
+  createData('15:00', 2000),
+  createData('18:00', 2400),
+  createData('21:00', 2400),
+  createData('24:00', undefined),
 ];
 
-function myFunction() {
-    const data = [
-  createData('2020-03-27', 1000),
-  createData('2020-03-28', 1300),
-  createData('2020-03-29', 1700),
-  createData('2020-03-30', 2200),
-  createData('2020-03-31', 2800),
-  createData('2020-04-01', 3500),
-  createData('2020-04-02', 4300),
-  createData('2020-04-03', 5200),
-  createData('2020-04-04', 6200),
-  createData('2020-04-05', 7300),
-  createData('2020-04-06', 8400),
-  createData('2020-04-07', 9600),
-];
-}
-
-export default function HospitalInput() {
+export default function SupplierInput() {
   const theme = useTheme();
   const classes = useStyles();
   const [selectedDate, setSelectedDate] = React.useState(new Date('2020-04-05T00:00:00'));
   const handleDateChange = (date) => {
     setSelectedDate(date);
   };
-  // const {data} = useSwr("New York", async () => {
-  //       const response = await fetch(
-  //           "http://ec2-3-122-224-7.eu-central-1.compute.amazonaws.com:8080/info?city=New%20York&country=US&state=New%20York&needs=1"
-  //       );
-  //       const data = await response.json();
-  //       return data;
-  //   });
-    console.log(data)
+
   return (
     <React.Fragment>
         <form className={classes.root} noValidate autoComplete="off">
             <CountrySelect/>
-            <TextField required id="standard-basic" label="Hospital" />
-            <TextField required id="standard-basic" label="City " oninput="myFunction()" />
+            <TextField required id="standard-basic" label="Company" />
+            <TextField required id="standard-basic" label="City" />
             <TextField required id="standard-basic" label="State" />
         </form>
-        Items needed by:
+        Items provided by:
         <form className={classes.root} noValidate autoComplete="off">
             <MuiPickersUtilsProvider utils={DateFnsUtils}>
               <KeyboardDatePicker
@@ -120,7 +92,7 @@ export default function HospitalInput() {
              <TextField id="standard-basic" label="Quantity" />
         </form>
         <form className={useStyles.root} noValidate autoComplete="off">
-          <Title>COVID-19 Cases in your Region</Title>
+          <Title>Medical equipment demand in your region</Title>
           <ResponsiveContainer width='60%' aspect={4.0/3.0}>
             <LineChart
               data={data}
@@ -138,7 +110,7 @@ export default function HospitalInput() {
                   position="left"
                   style={{ textAnchor: 'middle', fill: theme.palette.text.primary }}
                 >
-                  COVID-19 Cases
+                  Amount of items
                 </Label>
               </YAxis>
               <Line type="monotone" dataKey="amount" stroke={theme.palette.primary.main} dot={false} />
