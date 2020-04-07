@@ -7,7 +7,8 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
 import requests
-
+from datetime import datetime, timedelta
+import bson
 
 # How to use -> view at bottom of file
 
@@ -57,16 +58,20 @@ class DataLoader(object):
         data_dict = self.reshape_data(data_dict)
         return data_dict
 
+    @staticmethod
+    def ticks_to_datetime(ticks):
+        return datetime(1, 1, 1) + timedelta(microseconds=ticks / 10)
+
     def get_new_data(self):
-        uri = "http://localhost:8081/data"
+        uri = "http://ec2-3-122-224-7.eu-central-1.compute.amazonaws.com:8080/data"
         json_data = self.pull_data(uri)
         table = np.array(json_data["rows"])
         column_names = []
         for x in json_data["fields"]:
             column_names.append(x["name"])
-        df = pd.DataFrame(table,columns = column_names)
-        df["day"] = pd.to_datetime(df["day"])
-        df["id"] =  df["latitude"].apply(lambda x: str(x)) + "_" + df["longitude"].apply(lambda x: str(x))
+        df = pd.DataFrame(table, columns=column_names)
+        df["day"] = [datetime.fromtimestamp(x["$date"]/1000) for x in df["day"].values]
+        df["id"] = df["latitude"].apply(lambda x: str(x)) + "_" + df["longitude"].apply(lambda x: str(x))
         unique_ids = df["id"].unique()
         regions = {}
         for x in unique_ids:

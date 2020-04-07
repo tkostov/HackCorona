@@ -31,12 +31,11 @@ def get_infections():
     backend_data = list(it_collection.find())
     for x in backend_data:
         rows_data.append([x["cases"], x["fatalities"], x["population"], x["latitude"], x["longitude"],
-                          datetime.datetime.strptime(x["date"].replace("T", " "), '%Y-%m-%d %H:%M:%S').strftime(
-                              "%Y-%m-%d %H:%M:%S")])
+                          x["date"]])
     backend_data = list(ch_collection.find())
     for x in backend_data:
         rows_data.append([x["cases"], x["fatalities"], x["population"], x["latitude"], x["longitude"],
-                          datetime.datetime.strptime(x["date"], '%Y-%m-%d').strftime("%Y-%m-%d %H:%M:%S")])
+                          x["date"]])
 
     backend_data = list(de_collection.find())
     for x in backend_data:
@@ -61,38 +60,31 @@ def get_data_sqrt_scaled():
     json_data = {"fields": [{"name": "cases", "format": "", "type": "integer"},
                             {"name": "deaths", "format": "", "type": "integer"},
                             {"name": "ICUs", "format": "", "type": "integer"},
+                            {"name": "need", "format": "", "type": "integer"},
                             {"name": "latitude", "format": "", "type": "real"},
                             {"name": "longitude", "format": "", "type": "real"},
                             {"name": "day", "format": "YYYY-M-D H:m:s", "type": "timestamp"}],
                  "rows": []}
 
     # add IT data
-    json_data["rows"] += [[int(sqrt(x["cases"])), int(sqrt(x["fatalities"])), int(sqrt(x["icu"])), x["latitude"],
-                           x["longitude"], datetime.datetime.strptime(x["date"].replace("T", " "), '%Y-%m-%d %H:%M:%S')
-                               .strftime("%Y-%m-%d %H:%M:%S")] for x in list(it_collection.find()) if
-                          datetime.datetime.strptime(x["date"].replace("T", " "), "%Y-%m-%d %H:%M:%S").month > 2 or
-                          datetime.datetime.strptime(x["date"].replace("T", " "), '%Y-%m-%d %H:%M:%S').year > 2020]
+    json_data["rows"] += [[int(sqrt(x["cases"])), int(sqrt(x["fatalities"])), int(sqrt(x["icu"])), int(x["need"]), x["latitude"],
+                           x["longitude"], x["date"].strftime("%Y-%m-%d %H:%M:%S")] for x in list(it_collection.find()) if
+                          x["date"].month > 2 or x["date"].year > 2020]
 
     # add CH data
-    json_data["rows"] += [[int(sqrt(x["cases"])), int(sqrt(x["fatalities"])), int(sqrt(x["icu"])), x["latitude"],
-                           x["longitude"], datetime.datetime.strptime(x["date"], '%Y-%m-%d').strftime(
-            "%Y-%m-%d %H:%M:%S")] for x in list(ch_collection.find()) if datetime.datetime.strptime(
-        x["date"], '%Y-%m-%d').month > 1 or datetime.datetime.strptime(x["date"], '%Y-%m-%d').year >
-                          2020]
+    json_data["rows"] += [[int(sqrt(x["cases"])), int(sqrt(x["fatalities"])), int(sqrt(x["icu"])), int(x["need"]), x["latitude"],
+                           x["longitude"], x["date"].strftime("%Y-%m-%d %H:%M:%S")] for x in list(ch_collection.find())
+                          if x["date"].month > 1 or x["date"].year > 2020]
 
     # add DE data
-    json_data["rows"] += [[int(sqrt(x["cases"])), x["fatalities"], int(sqrt(x["icu"])), x["latitude"], x["longitude"],
-                           x["date"]] for x in list(de_collection.find()) if datetime.datetime.strptime(x["date"],
-                                                                                                        '%Y-%m-%d %H:%M:%S').month > 2 or datetime.datetime.strptime(
-        x["date"], '%Y-%m-%d %H:%M:%S')
-                              .year > 2020]
+    json_data["rows"] += [[int(sqrt(x["cases"])), x["fatalities"], int(sqrt(x["icu"])), int(x["need"]), x["latitude"], x["longitude"],
+                           x["date"].strftime("%Y-%m-%d %H:%M:%S")] for x in list(de_collection.find())
+                          if x["date"].month > 2 or x["date"] .year > 2020]
 
     # add US data
-    json_data["rows"] += [[int(sqrt(x["cases"])), x["fatalities"], int(sqrt(x["icu"])), x["latitude"], x["longitude"],
-                           x["date"]] for x in list(us_collection.find()) if datetime.datetime.strptime(x["date"],
-                                                                                                        '%Y-%m-%d %H:%M:%S').month > 2 or datetime.datetime.strptime(
-        x["date"], '%Y-%m-%d %H:%M:%S')
-                              .year > 2020]
+    json_data["rows"] += [[int(sqrt(x["cases"])), x["fatalities"], int(sqrt(x["icu"])), int(x["need"]), x["latitude"], x["longitude"],
+                           x["date"].strftime("%Y-%m-%d %H:%M:%S")] for x in list(us_collection.find())
+                          if x["date"].month > 2 or x["date"].year > 2020]
 
     return dumps(json_data), 200
 
@@ -190,11 +182,6 @@ def get_hosp_info():
         data = list(us_collection.find({"region": city}))
         geo_coordinates = [[x["latitude"], x["longitude"]] for x in data][0]
         data = [{"date": x["date"], "cases": x["cases"]} for x in data]
-        test_samples = list(us_collection.find({
-            'Latitude': geo_coordinates[0],
-            'Longitude': geo_coordinates[1],
-            'date': {'$gte': datetime.datetime.now()}
-        }))
         us_collection.update({
             'Latitude': geo_coordinates[0],
             'Longitude': geo_coordinates[1],

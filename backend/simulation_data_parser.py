@@ -106,7 +106,7 @@ def main():
                         "country": "US",
                         "region": region,
                         "cases": int(data[key]["forecast_infected"][i]),
-                        "date": (last_date + timedelta(days=i+1)).strftime("%Y-%m-%d %H:%M:%S"),
+                        "date": (last_date + timedelta(days=i+1)),
                         "fatalities": int(data[key]["forecast_deceased"][i]),
                         "latitude": latitude,
                         "longitude": longitude,
@@ -118,8 +118,8 @@ def main():
                         "released": 0,
                         "need": 0
                     })
-        except:
-            print("fail")
+        except Exception as e:
+            print(e)
             continue
 
 
