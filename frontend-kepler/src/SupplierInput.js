@@ -57,11 +57,11 @@ export default function SupplierInput() {
     <React.Fragment>
         <form className={classes.root} noValidate autoComplete="off">
             <CountrySelect/>
-            <TextField required id="standard-basic" label="Hospital" />
+            <TextField required id="standard-basic" label="Company" />
             <TextField required id="standard-basic" label="City" />
             <TextField required id="standard-basic" label="State" />
         </form>
-        Items needed by:
+        Items provided by:
         <form className={classes.root} noValidate autoComplete="off">
             <MuiPickersUtilsProvider utils={DateFnsUtils}>
               <KeyboardDatePicker
@@ -92,7 +92,7 @@ export default function SupplierInput() {
              <TextField id="standard-basic" label="Quantity" />
         </form>
         <form className={useStyles.root} noValidate autoComplete="off">
-          <Title>Today</Title>
+          <Title>Medical equipment demand in your region</Title>
           <ResponsiveContainer width='60%' aspect={4.0/3.0}>
             <LineChart
               data={data}
@@ -110,7 +110,7 @@ export default function SupplierInput() {
                   position="left"
                   style={{ textAnchor: 'middle', fill: theme.palette.text.primary }}
                 >
-                  Sales ($)
+                  Amount of items
                 </Label>
               </YAxis>
               <Line type="monotone" dataKey="amount" stroke={theme.palette.primary.main} dot={false} />
