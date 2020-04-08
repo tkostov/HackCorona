@@ -2,9 +2,8 @@ import React from 'react';
 import TextField from '@material-ui/core/TextField';
 import { makeStyles } from '@material-ui/core/styles';
 import CountrySelect from './CountrySelect'
-import {Link} from "react-router";
 import Button from "@material-ui/core/Button";
-
+import { Link } from 'react-router-dom';
 import useSwr from "swr";
 
 import Grid from '@material-ui/core/Grid';
@@ -18,6 +17,7 @@ import {
 import Title from './Title';
 import { useTheme } from '@material-ui/core/styles';
 import { LineChart, Line, XAxis, YAxis, Label, ResponsiveContainer } from 'recharts';
+import Container from "@material-ui/core/Container";
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -28,137 +28,191 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
+export default class HospitalInput extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            selectedDate: "2020-04-05T00:00:00",
+            city: "",
+            state: "",
+            zip: "",
+            country: "",
+            data: []
+        };
+        this.updateData = this.updateData.bind(this);
+        this.updateDay = this.updateDay.bind(this);
+        this.updateCity = this.updateCity.bind(this);
+        this.updateState = this.updateState.bind(this);
+    }
 
-// Generate Sales Data
-function createData(time, amount) {
-  return { time, amount };
-}
+    updateDay(date)
+    {
+        console.log(date);
+        this.state.selectedDate = date;
+    }
 
-const data = [
-  createData('2020-03-27', 1000),
-  createData('2020-03-28', 1300),
-  createData('2020-03-29', 1700),
-  createData('2020-03-30', 2200),
-  createData('2020-03-31', 2800),
-  createData('2020-04-01', 3500),
-  createData('2020-04-02', 4300),
-  createData('2020-04-03', 5200),
-  createData('2020-04-04', 0),
-  createData('2020-04-05', 0),
-  createData('2020-04-06', 0),
-  createData('2020-04-07', 0),
-];
+    updateCity(city) {
+        this.state.city = city;
+        this.updateData();
+    }
 
-function myFunction() {
-    const data = [
-  createData('2020-03-27', 1000),
-  createData('2020-03-28', 1300),
-  createData('2020-03-29', 1700),
-  createData('2020-03-30', 2200),
-  createData('2020-03-31', 2800),
-  createData('2020-04-01', 3500),
-  createData('2020-04-02', 4300),
-  createData('2020-04-03', 5200),
-  createData('2020-04-04', 6200),
-  createData('2020-04-05', 7300),
-  createData('2020-04-06', 8400),
-  createData('2020-04-07', 9600),
-];
-}
+    updateZip(zip) {
+        this.state.zip = zip;
+        this.updateData();
+    }
 
-export default function HospitalInput() {
-  const theme = useTheme();
-  const classes = useStyles();
-  const [selectedDate, setSelectedDate] = React.useState(new Date('2020-04-05T00:00:00'));
-  const handleDateChange = (date) => {
-    setSelectedDate(date);
-  };
-  // const {data} = useSwr("New York", async () => {
-  //       const response = await fetch(
-  //           "http://ec2-3-122-224-7.eu-central-1.compute.amazonaws.com:8080/info?city=New%20York&country=US&state=New%20York&needs=1"
-  //       );
-  //       const data = await response.json();
-  //       return data;
-  //   });
-    console.log(data)
-  return (
-    <React.Fragment>
-        <form className={classes.root} noValidate autoComplete="off">
-            <CountrySelect/>
-            <TextField required id="standard-basic" label="Hospital" />
-            <TextField required id="standard-basic" label="City " oninput="myFunction()" />
-            <TextField required id="standard-basic" label="State" />
-        </form>
-        Items needed by:
-        <form className={classes.root} noValidate autoComplete="off">
-            <MuiPickersUtilsProvider utils={DateFnsUtils}>
-              <KeyboardDatePicker
-                  disableToolbar
-                  variant="inline"
-                  format="MM/dd/yyyy"
-                  margin="normal"
-                  id="date-picker-inline"
-                  label="Date picker inline"
-                  value={selectedDate}
-                  onChange={handleDateChange}
-                  KeyboardButtonProps={{
-                    'aria-label': 'change date',
-                  }}
-                />
-            </MuiPickersUtilsProvider>
-        </form>
-        <form className={classes.root} noValidate autoComplete="off">
-             <TextField required id="standard-basic" label="Item" />
-             <TextField required id="standard-basic" label="Quantity" />
-        </form>
-        <form className={classes.root} noValidate autoComplete="off">
-             <TextField id="standard-basic" label="Item" />
-             <TextField id="standard-basic" label="Quantity" />
-        </form>
-        <form className={classes.root} noValidate autoComplete="off">
-             <TextField id="standard-basic" label="Item" />
-             <TextField id="standard-basic" label="Quantity" />
-        </form>
-        <form className={useStyles.root} noValidate autoComplete="off">
-          <Title>COVID-19 Cases in your Region</Title>
-          <ResponsiveContainer width='60%' aspect={4.0/3.0}>
-            <LineChart
-              data={data}
-              margin={{
-                top: 16,
-                right: 16,
-                bottom: 0,
-                left: 24,
-              }}
+    updateState(state) {
+        this.state.state = state;
+        this.updateData();
+    }
+
+    updateData() {
+        fetch(`http://localhost:8080/info?city=${this.state.city}&country=US&state=${this.state.state}&needs=1`)
+            .then(response => response.json())
+            .then(data => this.setState({
+                selectedDate: this.state.selectedDate,
+                data: [... data]
+            }));
+    }
+
+    render() {
+      return (
+          < React.Fragment >
+            < Grid container spacing = {0} alignItems = "center" justify = "center" >
+                < Grid item center xs = {5} >
+            <Container component="main" maxWidth="xs">
+                    < form noValidate autoComplete = "off" >
+                        <TextField required id = "standard-basic" label = "Hospital"/>
+                        <TextField required id = "standard-basic" label = "City " onChange = {(e)=>this.updateCity(e.target.value)}/>
+                        <TextField required id = "standard-basic" label = "Postcode " onChange = {(e)=>this.updateZip(e.target.value)}/>
+                        <TextField required id = "standard-basic" label = "State" onChange = {(e) => this.updateState(e.target.value)}/>
+                        <CountrySelect / >
+                        <MuiPickersUtilsProvider utils = {DateFnsUtils} >
+                            < KeyboardDatePicker disableToolbar variant = "inline" format = "dd.MM.yyyy" margin = "normal" id = "date-picker-inline" label = "Items needed by:"
+                                value = {this.state.selectedDate} onChange={this.updateDay}
+                                KeyboardButtonProps = {
+      {
+          'aria-label'
+      :
+          'change date',
+      }
+  }
+      />
+      < /MuiPickersUtilsProvider>
+      < /form>
+      < form
+      noValidate
+      autoComplete = "off" >
+          < TextField
+      required
+      id = "standard-basic"
+      label = "Item" / >
+          < TextField
+      required
+      id = "standard-basic"
+      label = "Quantity" / >
+          < /form>
+          < form
+      noValidate
+      autoComplete = "off" >
+          < TextField
+      id = "standard-basic"
+      label = "Item" / >
+          < TextField
+      id = "standard-basic"
+      label = "Quantity" / >
+          < /form>
+          < form
+      noValidate
+      autoComplete = "off" >
+          < TextField
+      id = "standard-basic"
+      label = "Item" / >
+          < TextField
+      id = "standard-basic"
+      label = "Quantity" / >
+          < /form>
+          < Link
+        to = {"/map"} >
+            < Button
+        type = "submit"
+        fullWidth
+        variant = "contained"
+        color = "primary"
             >
-              <XAxis dataKey="time" stroke={theme.palette.text.secondary} />
-              <YAxis stroke={theme.palette.text.secondary}>
-                <Label
-                  angle={270}
-                  position="left"
-                  style={{ textAnchor: 'middle', fill: theme.palette.text.primary }}
-                >
-                  COVID-19 Cases
-                </Label>
-              </YAxis>
-              <Line type="monotone" dataKey="amount" stroke={theme.palette.primary.main} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </form>
+            Submit
+            < /Button></
+        Link ></Container>
+          < /Grid>
 
-         <Link to={"/"}>
-             <Button
-                 type="submit"
-                 fullWidth
-                 variant="contained"
-                 color="primary"
-                 className={classes.submit}
-                 >
-             Submit
-         </Button></Link>
+            < Grid
+            item
+            center
+            xs = {7} >{
+                    this.state.data.length > 0 &&
+                < form
+            className = {useStyles.root}
+            noValidate
+            autoComplete = "off" >
+                < Title > COVID - 19
+            Cases in your
+            Region < /Title>
+            < ResponsiveContainer
+            width = '60%'
+            aspect = {4.0 / 3.0
+        }>
+        <
+            LineChart
+            data = {this.state.data}
+            margin = {
+            {
+                top: 16,
+                    right
+            :
+                16,
+                    bottom
+            :
+                0,
+                    left
+            :
+                24,
+            }
+        }
+        >
+        <
+            XAxis
+            dataKey = "date"
+                / >
+                < YAxis >
+                < Label
+            angle = {270}
+            position = "left"
+            style = {
+            {
+                textAnchor: 'middle'
+            }
+        }
+        >
+        <
+            /Label>
+            < /YAxis>
+            < Line
+            type = "monotone"
+            dataKey = "cases"
+            dot = {false}
+            />
+            < /LineChart>
+            < /ResponsiveContainer>
+            < /form>
+    }
+            < / Grid >
 
-    </React.Fragment>
-  );
+      < /Grid>
+
+      < /React.Fragment>
+  )
+      ;
+  }
 }
 
 

@@ -13,7 +13,7 @@ import {handleActions} from 'redux-actions';
 const appReducer = handleActions({
     // listen on kepler.gl map update action to store a copy of viewport in app state
     [ActionTypes.LAYER_CLICK]: (state, action) => {
-        console.log('logging vis state', action);
+        console.log('logging vis state', state, action);
         return action;
     }
 }, {});
@@ -38,7 +38,7 @@ function MyMap() {
     const dispatch = useDispatch();
     const {data} = useSwr("covid", async () => {
         const response = await fetch(
-            "http://localhost:8081/data/sqrt"
+            "http://ec2-3-122-224-7.eu-central-1.compute.amazonaws.com:8080/data/sqrt"
         );
         const data = await response.json();
         return data;
