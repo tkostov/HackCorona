@@ -1,4 +1,4 @@
-# #HackCorona Team @ [WirVsCorona Hackathon](https://wirvsvirushackathon.org) & [#CodeVsCOVID19](https://www.codevscovid19.org)
+# #HackCorona Team @ [WirVsCorona Hackathon](https://wirvsvirushackathon.org) & [#CodeVsCOVID19](https://www.codevscovid19.org) & [MITCOVID19Challenge](https://covid19challenge.mit.edu)
 
 ## Our solution
 
