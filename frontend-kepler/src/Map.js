@@ -25,16 +25,16 @@ const reducers = combineReducers({
 
 const store = createStore(reducers, {}, applyMiddleware(taskMiddleware));
 
-export default function Map() {
+export default function Map(props) {
     return (
         < Provider
     store = {store} >
-        < MyMap / >
+        < MyMap key={props.key}/ >
         < /Provider>
 )
     ;
 }
-function MyMap() {
+function MyMap(props) {
     const dispatch = useDispatch();
     const {data} = useSwr("covid", async () => {
         const response = await fetch(

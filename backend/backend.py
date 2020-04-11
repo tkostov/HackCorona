@@ -180,17 +180,20 @@ def get_hosp_info():
         data = [{x["date"], x["cases"]} for x in data]
     elif country == "US":
         data = list(us_collection.find({"region": city}))
-        geo_coordinates = [[x["latitude"], x["longitude"]] for x in data][0]
+        for i in range(len(data)):
+            data[i]["date"] = data[i]["date"].strftime("%Y-%m-%d")
+        if len(data) > 0:
+            geo_coordinates = [[x["latitude"], x["longitude"]] for x in data][0]
+            us_collection.update({
+                'Latitude': geo_coordinates[0],
+                'Longitude': geo_coordinates[1],
+                'date': {'$gte': datetime.datetime.now()}
+            }, {
+                '$inc': {
+                    'needs': int(needs)
+                }
+            }, upsert=False)
         data = [{"date": x["date"], "cases": x["cases"]} for x in data]
-        us_collection.update({
-            'Latitude': geo_coordinates[0],
-            'Longitude': geo_coordinates[1],
-            'date': {'$gte': datetime.datetime.now()}
-        }, {
-            '$inc': {
-                'needs': int(needs)
-            }
-        }, upsert=False)
     return dumps(data), 200
 
 # request.params what's needed - location (OSM API)
@@ -211,4 +214,4 @@ if __name__ == "__main__":
         }
     )
     app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
-    app.run(host="0.0.0.0", port="8081")
+    app.run(host="0.0.0.0", port="8080")

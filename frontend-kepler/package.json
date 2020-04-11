@@ -15,6 +15,7 @@
     "kepler.gl": "^2.0.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
+    "react-grid-system": "^6.3.0",
     "react-palm": "^3.1.2",
     "react-redux": "^7.2.0",
     "react-router": "^3.0.5",
@@ -27,10 +28,10 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "react-scripts --max_old_space_size=4096 build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "deploy": "aws s3 cp build/ s3://track-the-virus-v3/ --recursive"
+    "deploy": "aws s3 cp build/ s3://www.hospihelper.com/ --recursive"
   },
   "eslintConfig": {
     "extends": "react-app"

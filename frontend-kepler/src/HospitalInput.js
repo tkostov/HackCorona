@@ -1,21 +1,16 @@
 import React from 'react';
 import TextField from '@material-ui/core/TextField';
 import {makeStyles} from '@material-ui/core/styles';
-import CountrySelect from './CountrySelect'
 import Button from "@material-ui/core/Button";
 import {Link} from 'react-router-dom';
-import useSwr from "swr";
-
 import Grid from '@material-ui/core/Grid';
 import DateFnsUtils from '@date-io/date-fns';
 import {
     MuiPickersUtilsProvider,
-    KeyboardTimePicker,
     KeyboardDatePicker,
 } from '@material-ui/pickers';
 
 import Title from './Title';
-import {useTheme} from '@material-ui/core/styles';
 import {LineChart, Line, XAxis, YAxis, Label, ResponsiveContainer} from 'recharts';
 import Container from "@material-ui/core/Container";
 
@@ -32,7 +27,7 @@ export default class HospitalInput extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            selectedDate: "2020-04-05T00:00:00",
+            selectedDate: "2020-04-11T00:00:00",
             city: "",
             state: "",
             zip: "",
@@ -44,6 +39,7 @@ export default class HospitalInput extends React.Component {
         this.updateCity = this.updateCity.bind(this);
         this.updateZip = this.updateZip.bind(this);
         this.updateState = this.updateState.bind(this);
+        this.updateCountry = this.updateCountry.bind(this);
     }
 
     updateDay(date) {
@@ -66,8 +62,14 @@ export default class HospitalInput extends React.Component {
         this.updateData();
     }
 
+    updateCountry(country) {
+        console.log(country);
+        this.state.country = country;
+        this.updateData();
+    }
+
     updateData() {
-        fetch(`http://localhost:8080/info?city=${this.state.city}&country=US&state=${this.state.state}&needs=1`)
+        fetch(`http://ec2-3-122-224-7.eu-central-1.compute.amazonaws.com:8080/info?city=${this.state.city}&country=US&state=${this.state.state}&needs=1`)
             .then(response => response.json())
             .then(data => this.setState({
                 selectedDate: this.state.selectedDate,
@@ -85,11 +87,6 @@ export default class HospitalInput extends React.Component {
                                 <TextField required id="standard-basic" label="Hospital"/>
                                 <TextField required id="standard-basic" label="City "
                                            onChange={(e) => this.updateCity(e.target.value)}/>
-                                <TextField required id="standard-basic" label="Postcode "
-                                           onChange={(e) => this.updateZip(e.target.value)}/>
-                                <TextField required id="standard-basic" label="State"
-                                           onChange={(e) => this.updateState(e.target.value)}/>
-                                <CountrySelect/>
                                 <MuiPickersUtilsProvider utils={DateFnsUtils}>
                                     <KeyboardDatePicker disableToolbar variant="inline" format="dd.MM.yyyy"
                                                         margin="normal"
@@ -131,7 +128,7 @@ export default class HospitalInput extends React.Component {
                                     label="Quantity"/>
                             </form>
                             <Link
-                                to={"/map"}>
+                                to={"/"}>
                                 <Button
                                     type="submit"
                                     fullWidth
@@ -151,12 +148,12 @@ export default class HospitalInput extends React.Component {
                             className={useStyles.root}
                             noValidate
                             autoComplete="off">
-                            <Title> COVID - 19
+                            <Title> Predicted COVID19
                                 Cases in your
                                 Region </Title>
                             <ResponsiveContainer
-                                width='60%'
-                                aspect={4.0 / 3.0
+                                width='100%' height='60%'
+                                aspect={6.0 / 3.0
                                 }>
                                 <LineChart
                                     data={this.state.data}
