@@ -13,6 +13,7 @@ import {
 import Title from './Title';
 import {LineChart, Line, XAxis, YAxis, Label, ResponsiveContainer} from 'recharts';
 import Container from "@material-ui/core/Container";
+import Notifications, {notify} from 'react-notify-toast';
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -32,7 +33,8 @@ export default class HospitalInput extends React.Component {
             state: "",
             zip: "",
             country: "",
-            data: []
+            data: [],
+            showDialog: false
         };
         this.updateData = this.updateData.bind(this);
         this.updateDay = this.updateDay.bind(this);
@@ -40,6 +42,7 @@ export default class HospitalInput extends React.Component {
         this.updateZip = this.updateZip.bind(this);
         this.updateState = this.updateState.bind(this);
         this.updateCountry = this.updateCountry.bind(this);
+        this.showConfirmation = this.showConfirmation.bind(this);
     }
 
     updateDay(date) {
@@ -63,7 +66,6 @@ export default class HospitalInput extends React.Component {
     }
 
     updateCountry(country) {
-        console.log(country);
         this.state.country = country;
         this.updateData();
     }
@@ -76,6 +78,11 @@ export default class HospitalInput extends React.Component {
                 data: [...data]
             }));
     }
+
+    showConfirmation() {
+        let myColor = { background: '#0E1717', text: "#FFFFFF" };
+        notify.show('Your ressources have been added!', "success", 5000, myColor);
+    };
 
     render() {
         return (
@@ -127,16 +134,17 @@ export default class HospitalInput extends React.Component {
                                     id="standard-basic"
                                     label="Quantity"/>
                             </form>
-                            <Link
-                                to={"/"}>
+                            <Link>
                                 <Button
                                     type="submit"
                                     fullWidth
                                     variant="contained"
+                                    onClick={this.showConfirmation}
                                     color="primary">
                                     Submit
                                 </Button></
                                 Link>
+                            <Notifications />
                         </Container>
                     </Grid>
                     <Grid
